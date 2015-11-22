@@ -33,7 +33,7 @@ public:
         map<string, double>::iterator it = mpVars->find(name);
         if (it != mpVars->end())
         {
-            cout << "external found" << endl;
+            //cout << "external found" << endl;
             it->second = value;
             return true;
         }
@@ -58,17 +58,18 @@ int main()
     //std::string expr = "a=5;\n a=8\n a;";
     //std::string expr = "a=1;b=2;c=3;d=a+b*c;d";
     //std::string expr = "a=1;b=2;c=3;d=4;a=(3+b)+4^2*c^(2+d)-7*(d-1)";
-    std::string expr = "a=1;b=2;c=3;d=4;a=(3+b)+4^2*c^(2+d)-7/6/5*(d-1)";
+    //std::string expr = "a=1;b=2;c=3;d=4;a=(3+b)+4^2*c^(2+d)-7/6/5*(d-1)";
     //std::string expr = "7/3/4/5";
     //std::string expr = "(4/3*14*7/3/4/5*5/(4*3/2))";
-    //std::string expr = " #   \n    a=5;\n #   a=8\n a+1;  #Some comment ";
+    std::string expr = " \t #   \n    a=5;\n #   a=8\n a+1; \r\n a+2 \r a+3 \r\n #Some comment ";
 
 
     externalVars.insert(pair<string,double>("dog", 55));
-    //std::string expr = "dog=5;a=2;b=dog*a;b";
+    externalVars.insert(pair<string,double>("cat", 66));
+    //std::string expr = "cat \n dog \r dog=5;cat=2;a=3;b=dog*cat*a;b";
 
     list<string> exprlist;
-    splitExprRows(expr, '#', exprlist);
+    extractExpressionRows(expr, '#', exprlist);
 
     for (list<string>::iterator it = exprlist.begin(); it!=exprlist.end(); ++it)
     {

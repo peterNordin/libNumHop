@@ -5,6 +5,7 @@
 
 namespace numhop {
 
+//! @brief Default constructor
 Expression::Expression()
 {
     mOperator = UndefinedT;
@@ -13,6 +14,7 @@ Expression::Expression()
     mpLhs = 0;
 }
 
+//! @brief Constructor
 Expression::Expression(const std::string &exprString, ExpressionOperatorT op, const std::string &lhs, const std::string &rhs)
 {
     mHadOuterParanthesis = false;
@@ -33,6 +35,7 @@ Expression::Expression(const std::string &exprString, ExpressionOperatorT op, co
     }
 }
 
+//! @brief Copy constructor
 Expression::Expression(const Expression &other)
 {
     mHadOuterParanthesis = false;
@@ -41,6 +44,7 @@ Expression::Expression(const Expression &other)
     copyFromOther(other);
 }
 
+//! @brief Destructor
 Expression::~Expression()
 {
     if (mpLhs)
@@ -53,6 +57,7 @@ Expression::~Expression()
     }
 }
 
+//! @brief The assignment operator
 Expression &Expression::operator=(const Expression &other)
 {
     // Check for self-assignment
@@ -68,27 +73,35 @@ Expression &Expression::operator=(const Expression &other)
     return *this;
 }
 
+//! @brief Check if this expression is empty
 bool Expression::empty() const
 {
     return mExpressionString.empty();
 }
 
+//! @brief Check if this expression represents a value or variable
 bool Expression::isValue() const
 {
     return mOperator == ValueT;
 }
 
+//! @brief Returns the expression string (without outer parenthesis)
 const std::string &Expression::exprString() const
 {
     return mExpressionString;
 }
 
+//! @brief Returns the operator type
 ExpressionOperatorT Expression::operatorType() const
 {
     return mOperator;
 }
 
-double Expression::evaluate(VariableStorage &variableStorage, bool &rEvalOK)
+//! @brief Evaluate the expression
+//! @param[in,out] rVariableStorage The variable storage to use for setting or getting variable values
+//! @param[out] rEvalOK Indicates wheter evaluation was successfull or not
+//! @return The value of the evaluated expression
+double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
 {
     bool rhsOK, lhsOK;
     double value;
@@ -100,38 +113,38 @@ double Expression::evaluate(VariableStorage &variableStorage, bool &rEvalOK)
         lhsOK = (pEnd != mExpressionString.c_str());
         if (!lhsOK)
         {
-            value = variableStorage.value(mExpressionString, lhsOK);
+            value = rVariableStorage.value(mExpressionString, lhsOK);
             //need to avaluate in some other way
         }
     }
     else if (mOperator == AdditionT)
     {
-        value = mpLhs->evaluate(variableStorage, rhsOK) + mpRhs->evaluate(variableStorage, lhsOK);
+        value = mpLhs->evaluate(rVariableStorage, rhsOK) + mpRhs->evaluate(rVariableStorage, lhsOK);
     }
     else if (mOperator == SubtractionT)
     {
-        value = mpLhs->evaluate(variableStorage, rhsOK) - mpRhs->evaluate(variableStorage, lhsOK);
+        value = mpLhs->evaluate(rVariableStorage, rhsOK) - mpRhs->evaluate(rVariableStorage, lhsOK);
     }
     else if (mOperator == MultiplicationT)
     {
-        value = mpLhs->evaluate(variableStorage, rhsOK) * mpRhs->evaluate(variableStorage, lhsOK);
+        value = mpLhs->evaluate(rVariableStorage, rhsOK) * mpRhs->evaluate(rVariableStorage, lhsOK);
     }
     else if (mOperator == DivisionT)
     {
-        value = mpLhs->evaluate(variableStorage, rhsOK) / mpRhs->evaluate(variableStorage, lhsOK);
+        value = mpLhs->evaluate(rVariableStorage, rhsOK) / mpRhs->evaluate(rVariableStorage, lhsOK);
     }
     else if (mOperator == PowerT)
     {
-        value = pow(mpLhs->evaluate(variableStorage, rhsOK), mpRhs->evaluate(variableStorage, lhsOK));
+        value = pow(mpLhs->evaluate(rVariableStorage, rhsOK), mpRhs->evaluate(rVariableStorage, lhsOK));
     }
     else if (mOperator == AssignmentT)
     {
         // Try to assign variable
         bool dummy;
-        value = mpRhs->evaluate(variableStorage, lhsOK);
+        value = mpRhs->evaluate(rVariableStorage, lhsOK);
         if (lhsOK)
         {
-           rhsOK = variableStorage.setVariable(mpLhs->exprString(), value, dummy);
+           rhsOK = rVariableStorage.setVariable(mpLhs->exprString(), value, dummy);
         }
     }
 
@@ -139,6 +152,7 @@ double Expression::evaluate(VariableStorage &variableStorage, bool &rEvalOK)
     return value;
 }
 
+//! @brief Prints the expression (as it will be evaluated) to a string
 std::string Expression::print()
 {
     std::string fullexp;
@@ -187,6 +201,14 @@ std::string Expression::print()
     return fullexp;
 }
 
+//! @brief Set wheter the expression had outer parenthesis (usefull to know when printing)
+void Expression::setHadOuterParanthesis(bool tf)
+{
+    mHadOuterParanthesis = tf;
+}
+
+//! @brief Copy from other expression (helpfunction for assignment and copy constructor)
+//! @param[in] other The expression to copy from
 void Expression::copyFromOther(const Expression &other)
 {
     mExpressionString = other.mExpressionString;
@@ -202,9 +224,14 @@ void Expression::copyFromOther(const Expression &other)
     }
 }
 
+//! @brief Find an operator and brach the expression tree at this point
+//! @param[in] exprString The expression string to process
+//! @param[in] evalOperators A string with the operators to search for
+//! @param[out] The resulting expresssion (Empty expression if nothing found)
+//! @returns False if some error occured else true
 bool branchExpressionOnOperator(std::string exprString, const std::string &evalOperators, Expression &rExp)
 {
-    stripLeadingTrailingWhitespaces(exprString);
+    removeWhitespaces(exprString);
     bool hadParanthesis;
     stripLeadingTrailingParanthesis(exprString, hadParanthesis);
 
@@ -256,7 +283,7 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
             if (optype != UndefinedT)
             {
                 rExp = Expression(exprString, optype, exprString.substr(0, i), exprString.substr(i+1) );
-                rExp.mHadOuterParanthesis = hadParanthesis;
+                rExp.setHadOuterParanthesis(hadParanthesis);
                 return true;
             }
         }
@@ -267,6 +294,9 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
     return true;
 }
 
+//! @brief Process an expression string recurseivly to build an expresssion tree
+//! @param[in] exprString The expression string to process
+//! @param[out] rExp The reuslting expression tree
 bool interpretExpressionStringRecursive(std::string exprString, Expression &rExp)
 {
     Expression e;

@@ -23,15 +23,16 @@ public:
     const std::string &exprString() const;
     ExpressionOperatorT operatorType() const;
 
-    double evaluate(VariableStorage &variableStorage, bool &rEvalOK);
-    std::string print();
+    double evaluate(VariableStorage &rVariableStorage, bool &rEvalOK);
 
-    bool mHadOuterParanthesis; //! < @todo hack, should not be public
+    std::string print();
+    void setHadOuterParanthesis(bool tf);
 
 protected:
     void copyFromOther(const Expression &other);
 
     std::string mExpressionString;
+    bool mHadOuterParanthesis;
     Expression *mpLhs, *mpRhs;
     ExpressionOperatorT mOperator;
 

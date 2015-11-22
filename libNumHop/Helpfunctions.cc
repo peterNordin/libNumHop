@@ -3,60 +3,127 @@
 using namespace std;
 namespace numhop {
 
+////! @brief Split a string into multiple rows based on ; or \n characters
+////! @param[in] expr The expression as a string
+////! @param[in] comment The comment character (ignore those lines)
+////! @param[out] rExpressions The list of expression lines
+//void splitExprRows(const string &expr, const char &comment, list<string> &rExpressions)
+//{
+//    size_t s=0;
+//    do
+//    {
+//        //! @todo this is inefficient, searching multiple times, need to improve and only search one (loop until)
+//        size_t e = expr.find_first_of(";",s);
+//        size_t en = expr.find_first_of("\n",s);
+//        size_t er = expr.find_first_of("\r",s);
+//        size_t ec = expr.find_first_of(comment,s);
+//        e = std::min(std::min(e,std::min(en,er)), ec);
+//        if (s<expr.size() && (e-s)>0)
+//        {
+//            string part = expr.substr(s,e-s);
+//            stripLeadingTrailingWhitespaces(part);
+//            if (!part.empty())
+//            {
+//                rExpressions.push_back(part);
+//            }
+//        }
+//        if (e == string::npos)
+//        {
+//            break;
+//        }
+//        // If comment skip to after next newline
+//        if (expr[e] == comment)
+//        {
+//            s = std::min(expr.find_first_of('\n', e),
+//                         expr.find_first_of('\r', e));
+//            if (s != string::npos)
+//            {
+//                s = s+1;
+//            }
+//        }
+//        // Else advance one step before the found ; or \n character
+//        else
+//        {
+//            s = e+1;
+//        }
+//    }while(true);
+//}
+
 //! @brief Split a string into multiple rows based on ; or \n characters
 //! @param[in] expr The expression as a string
 //! @param[in] comment The comment character (ignore those lines)
 //! @param[out] rExpressions The list of expression lines
-void splitExprRows(const string &expr, const char &comment, list<string> &rExpressions)
+void extractExpressionRows(const string &expr, const char &comment, list<string> &rExpressions)
 {
-    size_t s=0;
-    do
+    size_t s=0, e;
+    for (e=0; e<expr.size(); ++e)
     {
-        size_t e = expr.find_first_of(";",s);
-        size_t en = expr.find_first_of("\n",s);
-        size_t ec = expr.find_first_of(comment,s);
-        e = std::min(std::min(e,en), ec);
-        if (s<expr.size() && (e-s)>0)
+        const char &c = expr[e];
+        if (c == '\n' || c == '\r' || c == ';' || c == comment || (e+1 == expr.size()))
         {
-            string part = expr.substr(s,e-s);
-            stripLeadingTrailingWhitespaces(part);
-            if (!part.empty())
+            // Handle end of string we need to read the last char
+            if (e+1 == expr.size())
             {
-                rExpressions.push_back(part);
+                ++e;
+            }
+
+            if (s<expr.size() && (e-s)>0)
+            {
+                string part = expr.substr(s,e-s);
+                stripLeadingTrailingWhitespaces(part);
+                if (!part.empty())
+                {
+                    rExpressions.push_back(part);
+                }
+            }
+
+            // If comment skip to after next newline
+            if (c == comment)
+            {
+                for (; e<expr.size(); ++e)
+                {
+                    const char &cc = expr[e];
+                    if (cc == '\n' || cc == '\r')
+                    {
+                        // Advance (start) one step from the found \n character
+                        s=e+1;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // Advance (start) one step from the found ; or \n character
+                s = e+1;
             }
         }
-        if (e == string::npos)
-        {
-            break;
-        }
-        // If comment skip to after next newline
-        if (expr[e] == comment)
-        {
-            s = expr.find_first_of('\n', e);
-            if (s != string::npos)
-            {
-                s = s+1;
-            }
-        }
-        // Else advance one step before the found ; or \n character
-        else
-        {
-            s = e+1;
-        }
-    }while(true);
+    }
 }
 
 //! @brief Strip leading and trailing spaces from a string
 //! @param[in,out] rString The string to process
 void stripLeadingTrailingWhitespaces(string &rString)
 {
-    while (!rString.empty() && rString[0] == ' ')
+    while (!rString.empty() && (rString[0] == ' ' || rString[0] == '\t'))
     {
         rString.erase(0,1);
     }
-    while (!rString.empty() && rString[rString.size()-1] == ' ')
+    while (!rString.empty() && (rString[rString.size()-1] == ' ' || rString[rString.size()-1] == '\t'))
     {
         rString.erase(rString.size()-1);
+    }
+}
+
+//! @brief Remove all white spaces (space, tab) from a string
+//! @param[in,out] rString The string to process
+void removeWhitespaces(string &rString)
+{
+    for (size_t i=0; i<rString.size(); ++i)
+    {
+        if (rString[i] == ' ' || rString[i] == '\t')
+        {
+            rString.erase(i,1);
+        }
     }
 }
 
