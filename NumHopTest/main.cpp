@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <list>
+#include <vector>
 #include <map>
 
 
@@ -52,32 +53,50 @@ int main()
     VariableStorage variableStorage;
 
     variableStorage.setExternalStorage(&extVariableStorage);
-    cout << "Hello World!" << endl;
-
-    //std::string expr = "a=5;a=8;a;";
-    //std::string expr = "a=5;\n a=8\n a;";
-    //std::string expr = "a=1;b=2;c=3;d=a+b*c;d";
-    //std::string expr = "a=1;b=2;c=3;d=4;a=(3+b)+4^2*c^(2+d)-7*(d-1)";
-    //std::string expr = "a=1;b=2;c=3;d=4;a=(3+b)+4^2*c^(2+d)-7/6/5*(d-1)";
-    //std::string expr = "7/3/4/5";
-    //std::string expr = "(4/3*14*7/3/4/5*5/(4*3/2))";
-    std::string expr = " \t #   \n    a=5;\n #   a=8\n a+1; \r\n a+2 \r a+3 \r\n #Some comment ";
-
+    cout << "libNumHop example executable!" << endl;
 
     externalVars.insert(pair<string,double>("dog", 55));
     externalVars.insert(pair<string,double>("cat", 66));
-    //std::string expr = "cat \n dog \r dog=5;cat=2;a=3;b=dog*cat*a;b";
+    std::vector<std::string> expr;
+    expr.push_back("a=5;a=8;a;");
+    expr.push_back("a=5;\n a=8\n a;");
+    expr.push_back("a=1;b=2;c=3;d=a+b*c;d");
+    expr.push_back("a=1;b=2;c=3;d=4;a=(3+b)+4^2*c^(2+d)-7*(d-1)");
+    expr.push_back("a=1;b=2;c=3;d=4;a=(3+b)+4^2*c^(2+d)-7/6/5*(d-1)");
+    expr.push_back("7/3/4/5");
+    expr.push_back("(4/3*14*7/3/4/5*5/(4*3/2))");
+    expr.push_back(" \t #   \n    a=5;\n #   a=8\n a+1; \r\n a+2 \r a+3 \r\n #Some comment ");
+    expr.push_back("a=1; b=2; a-b; a-b+a");
+    expr.push_back("a=1; b=2; -a+b; b-a; (-a)+b; b+(-a); ; b+(+a); b+a; +a+b");
 
-    list<string> exprlist;
-    extractExpressionRows(expr, '#', exprlist);
+    expr.push_back("cat \n dog \r dog=5;cat=2;a=3;b=dog*cat*a;b");
 
-    for (list<string>::iterator it = exprlist.begin(); it!=exprlist.end(); ++it)
+    for (size_t i=0; i<expr.size(); ++i)
     {
-        Expression e;
-        interpretExpressionStringRecursive(*it, e);
-        bool evalOK;
-        double value = e.evaluate(variableStorage, evalOK);
-        cout << "Evaluating: "  << *it << " --> " << e.print() << "     Value: " << value << " evalOK:" << evalOK << endl;
+        cout << endl;
+        cout << expr[i] << endl;
+        cout << "----------------------------------------------------------------" << endl;
+
+        list<string> exprlist;
+        extractExpressionRows(expr[i], '#', exprlist);
+
+        for (list<string>::iterator it = exprlist.begin(); it!=exprlist.end(); ++it)
+        {
+            Expression e;
+            interpretExpressionStringRecursive(*it, e);
+            bool evalOK;
+            double value = e.evaluate(variableStorage, evalOK);
+            cout << "Evaluating: ";
+            if (evalOK)
+            {
+                cout << "OK    : ";
+            }
+            else
+            {
+                cout << "FAILED: ";
+            }
+            cout << *it << " --> " << e.print() << "     Value: " << value << endl;
+        }
     }
 
     return 0;
