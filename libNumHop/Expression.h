@@ -2,6 +2,7 @@
 #define EXPRESSION_H
 
 #include <string>
+#include <list>
 #include "VariableStorage.h"
 
 namespace numhop {
@@ -39,7 +40,43 @@ protected:
 
 };
 
+
+
+class Expression2
+{
+public:
+    Expression2();
+    Expression2(const Expression &other);
+    Expression2(const std::string &exprString, ExpressionOperatorT op);
+    Expression2(const std::string &leftExprString, const std::string &rightExprString, ExpressionOperatorT op);
+    ~Expression2();
+
+    Expression2& operator= (const Expression2 &other);
+
+    bool empty() const;
+    bool isValue() const;
+
+    const std::string &exprString() const;
+    const std::string &leftExprString() const;
+    const std::string &rightExprString() const;
+    ExpressionOperatorT operatorType() const;
+
+    double evaluate(VariableStorage &rVariableStorage, bool &rEvalOK);
+
+    std::string print();
+
+protected:
+    void copyFromOther(const Expression2 &other);
+
+    std::string mLeftExpressionString, mRightExpressionString;
+    bool mHadLeftOuterParanthesis, mHadRightOuterParanthesis;
+    std::list<Expression2> mLeftChildExpressions, mRightChildExpressions;
+    ExpressionOperatorT mOperator;
+};
+
 bool interpretExpressionStringRecursive(std::string exprString, Expression &rExp);
+bool interpretExpressionStringRecursive2(std::string exprString, std::list<Expression2> &rExp);
+bool interpretExpressionStringRecursive2(std::string exprString, Expression2 &rExp);
 
 }
 

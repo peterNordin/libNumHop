@@ -299,4 +299,12 @@ char stripInitialSign(string &rString)
     return '+';
 }
 
+void stripInitialPlus(string &rString)
+{
+    if (!rString.empty() && rString[0]=='+')
+    {
+        rString.erase(0,1);
+    }
+}
+
 }
