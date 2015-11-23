@@ -280,7 +280,19 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
             }
 
             // Add expression
-            if (optype != UndefinedT)
+            if (optype == AdditionT || optype == SubtractionT)
+            {
+                // allow +a or -a expressions by adding 0 left hand side
+                std::string lhs = exprString.substr(0, i);
+                if (lhs.empty())
+                {
+                    lhs = "0";
+                }
+                rExp = Expression(exprString, optype, lhs, exprString.substr(i+1) );
+                rExp.setHadOuterParanthesis(hadParanthesis);
+                return true;
+            }
+            else if (optype != UndefinedT)
             {
                 rExp = Expression(exprString, optype, exprString.substr(0, i), exprString.substr(i+1) );
                 rExp.setHadOuterParanthesis(hadParanthesis);
@@ -303,21 +315,25 @@ bool interpretExpressionStringRecursive(std::string exprString, Expression &rExp
     branchExpressionOnOperator(exprString, "=", e);
     if (e.empty())
     {
-        branchExpressionOnOperator(exprString, "+-", e);
+        branchExpressionOnOperator(exprString, "+", e);
         if (e.empty())
         {
-            fixMultiDivision(exprString);
-            branchExpressionOnOperator(exprString, "*", e);
+            branchExpressionOnOperator(exprString, "-", e);
             if (e.empty())
             {
-                branchExpressionOnOperator(exprString, "/", e);
+                fixMultiDivision(exprString);
+                branchExpressionOnOperator(exprString, "*", e);
                 if (e.empty())
                 {
-                    branchExpressionOnOperator(exprString, "^", e);
+                    branchExpressionOnOperator(exprString, "/", e);
                     if (e.empty())
                     {
-                        // This must be a value
-                        e = Expression(exprString, ValueT);
+                        branchExpressionOnOperator(exprString, "^", e);
+                        if (e.empty())
+                        {
+                            // This must be a value
+                            e = Expression(exprString, ValueT);
+                        }
                     }
                 }
             }
