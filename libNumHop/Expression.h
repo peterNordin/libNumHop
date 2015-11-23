@@ -33,6 +33,7 @@ protected:
 
     std::string mExpressionString;
     bool mHadOuterParanthesis;
+    bool mIsNegative;
     Expression *mpLhs, *mpRhs;
     ExpressionOperatorT mOperator;
 

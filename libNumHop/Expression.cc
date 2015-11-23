@@ -10,6 +10,7 @@ Expression::Expression()
 {
     mOperator = UndefinedT;
     mHadOuterParanthesis = false;
+    mIsNegative = false;
     mpRhs = 0;
     mpLhs = 0;
 }
@@ -18,10 +19,12 @@ Expression::Expression()
 Expression::Expression(const std::string &exprString, ExpressionOperatorT op, const std::string &lhs, const std::string &rhs)
 {
     mHadOuterParanthesis = false;
+    mIsNegative = false;
     mpRhs = 0;
     mpLhs = 0;
     mExpressionString = exprString;
     stripLeadingTrailingWhitespaces(mExpressionString);
+    mIsNegative = stripInitialSign(mExpressionString) == '-';
     mOperator = op;
     if (op != ValueT)
     {
@@ -39,6 +42,7 @@ Expression::Expression(const std::string &exprString, ExpressionOperatorT op, co
 Expression::Expression(const Expression &other)
 {
     mHadOuterParanthesis = false;
+    mIsNegative = false;
     mpRhs = 0;
     mpLhs = 0;
     copyFromOther(other);
@@ -105,7 +109,7 @@ double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
 {
     bool rhsOK, lhsOK;
     double value;
-    if (isValue())
+    if (mOperator == ValueT)
     {
         rhsOK=true;
         char* pEnd;
@@ -114,7 +118,10 @@ double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
         if (!lhsOK)
         {
             value = rVariableStorage.value(mExpressionString, lhsOK);
-            //need to avaluate in some other way
+        }
+        if(mIsNegative)
+        {
+            value = -value;
         }
     }
     else if (mOperator == AdditionT)
@@ -190,7 +197,14 @@ std::string Expression::print()
     }
     if(isValue())
     {
-        fullexp = mExpressionString;
+        if (mIsNegative)
+        {
+            fullexp = "-"+mExpressionString;
+        }
+        else
+        {
+            fullexp = mExpressionString;
+        }
     }
 
     if (mHadOuterParanthesis)
@@ -214,6 +228,7 @@ void Expression::copyFromOther(const Expression &other)
     mExpressionString = other.mExpressionString;
     mOperator = other.mOperator;
     mHadOuterParanthesis = other.mHadOuterParanthesis;
+    mIsNegative = other.mIsNegative;
     if (other.mpLhs)
     {
         mpLhs = new Expression(*other.mpLhs);
@@ -234,6 +249,7 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
     removeWhitespaces(exprString);
     bool hadParanthesis;
     stripLeadingTrailingParanthesis(exprString, hadParanthesis);
+    //fixInitialSign(exprString);
 
     size_t nOpenParanthesis=0;
     for (size_t i=0; i<exprString.size(); ++i)
@@ -261,10 +277,19 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
             else if ( (c == '+') && contains(evalOperators, '+') )
             {
                 optype = AdditionT;
+                if (i == 0)
+                {
+                    optype = UndefinedT;
+                }
+
             }
             else if ( (c == '-') && contains(evalOperators, '-') )
             {
                 optype = SubtractionT;
+                if (i == 0)
+                {
+                    optype = UndefinedT;
+                }
             }
             else if ( (c == '*') && contains(evalOperators, '*') )
             {
@@ -280,19 +305,7 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
             }
 
             // Add expression
-            if (optype == AdditionT || optype == SubtractionT)
-            {
-                // allow +a or -a expressions by adding 0 left hand side
-                std::string lhs = exprString.substr(0, i);
-                if (lhs.empty())
-                {
-                    lhs = "0";
-                }
-                rExp = Expression(exprString, optype, lhs, exprString.substr(i+1) );
-                rExp.setHadOuterParanthesis(hadParanthesis);
-                return true;
-            }
-            else if (optype != UndefinedT)
+            if (optype != UndefinedT)
             {
                 rExp = Expression(exprString, optype, exprString.substr(0, i), exprString.substr(i+1) );
                 rExp.setHadOuterParanthesis(hadParanthesis);
@@ -315,6 +328,7 @@ bool interpretExpressionStringRecursive(std::string exprString, Expression &rExp
     branchExpressionOnOperator(exprString, "=", e);
     if (e.empty())
     {
+        fixMultiSubtraction(exprString);
         branchExpressionOnOperator(exprString, "+", e);
         if (e.empty())
         {

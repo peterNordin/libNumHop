@@ -12,6 +12,8 @@ void removeWhitespaces(std::string &rString);
 void stripLeadingTrailingWhitespaces(std::string &rString);
 bool stripLeadingTrailingParanthesis(std::string &rString, bool &rDidStrip);
 void fixMultiDivision(std::string &rString);
+void fixMultiSubtraction(std::string &rString);
+char stripInitialSign(std::string &rString);
 
 inline bool contains(const std::string &str, const char c)
 {

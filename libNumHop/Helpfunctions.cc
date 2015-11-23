@@ -180,31 +180,123 @@ bool stripLeadingTrailingParanthesis(string &rString, bool &rDidStrip)
 //! @param[in,out] rString The string to process
 void fixMultiDivision(string &rString)
 {
-    size_t i=0;
-    int ld=-1;
+    bool hadParanthesis;
+    stripLeadingTrailingParanthesis(rString, hadParanthesis);
+
+    size_t i=0, numOpenP=0;
+    int ld=-1; // Last division index
     while(i<rString.size())
     {
         char &c = rString[i];
-        if (c == '/')
+
+        if (c == '(')
         {
-            if (ld < 0)
-            {
-                ld = i;
-            }
-            else
-            {
-                size_t insertAt = i;
-                rString.insert(insertAt, "*1");
-                ld = i+2;
-                i=ld;
-            }
+            numOpenP++;
         }
-        else if (c == '*')
+        else if (c == ')')
         {
-            ld = -1;
+            numOpenP--;
+        }
+
+        if (numOpenP==0)
+        {
+            if (c == '/')
+            {
+                if (ld < 0)
+                {
+                    ld = i;
+                }
+                else
+                {
+                    size_t insertAt = i;
+                    rString.insert(insertAt, "*1");
+                    ld = i+2;
+                    i=ld;
+                }
+            }
+            else if (c == '*')
+            {
+                ld = -1;
+            }
         }
         ++i;
     }
+
+    if (hadParanthesis)
+    {
+        rString = "("+rString+")";
+    }
+
+}
+
+//! @brief Convert multiple consecutive subtractions into additions with 0
+//! @details Example: 1-2-3-4 becomes 1-2+0-3+0-4
+//! @param[in,out] rString The string to process
+void fixMultiSubtraction(string &rString)
+{
+    bool hadParanthesis;
+    stripLeadingTrailingParanthesis(rString, hadParanthesis);
+
+    size_t i=0,numOpenP=0;
+    int ls=-1; // Last subtraction index
+    while(i<rString.size())
+    {
+        char &c = rString[i];
+
+        if (c == '(')
+        {
+            numOpenP++;
+        }
+        else if (c == ')')
+        {
+            numOpenP--;
+        }
+
+        if (numOpenP==0)
+        {
+            if (c == '-')
+            {
+                if (ls < 0)
+                {
+                    ls = i;
+                }
+                else
+                {
+                    size_t insertAt = i;
+                    rString.insert(insertAt, "+0");
+                    ls = i+2;
+                    i=ls;
+                }
+            }
+            else if (c == '+')
+            {
+                ls = -1;
+            }
+        }
+        ++i;
+    }
+
+    if (hadParanthesis)
+    {
+        rString = "("+rString+")";
+    }
+}
+
+char stripInitialSign(string &rString)
+{
+    if (!rString.empty())
+    {
+        if (rString[0] == '-')
+        {
+            rString.erase(0,1);
+            return '-';
+        }
+        else if (rString[0] == '+')
+        {
+            rString.erase(0,1);
+        }
+    }
+    return '+';
 }
 
 }
