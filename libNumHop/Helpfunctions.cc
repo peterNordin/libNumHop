@@ -59,10 +59,12 @@ void extractExpressionRows(const string &expr, const char &comment, list<string>
     for (e=0; e<expr.size(); ++e)
     {
         const char &c = expr[e];
-        if (c == '\n' || c == '\r' || c == ';' || c == comment || (e+1 == expr.size()))
+        bool foundSeparator = (c == '\n' || c == '\r' || c == ';' || c == comment);
+        bool foundEOS = (e+1 == expr.size());
+        if (foundSeparator || foundEOS)
         {
-            // Handle end of string we need to read the last char
-            if (e+1 == expr.size())
+            // Handle end of string, we need to read the last char
+            if (foundEOS && !foundSeparator)
             {
                 ++e;
             }
