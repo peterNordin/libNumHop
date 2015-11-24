@@ -6,6 +6,22 @@
 
 namespace numhop {
 
+std::string allOperators="=+-*/^";
+
+// Internal help function
+bool checkForDoubleOperators(size_t e, const std::string &expr)
+{
+    if (e<expr.size()-1 && contains(allOperators, expr[e+1]))
+    {
+         return true;
+    }
+    if (e>0 && contains(allOperators, expr[e-1]))
+    {
+        return true;
+    }
+    return false;
+}
+
 //! @brief Find an operator and branch the expression tree at this point
 //! @param[in] exprString The expression string to process
 //! @param[in] evalOperators A string with the operators to search for
@@ -37,15 +53,18 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
 
         if (nOpenParanthesis == 0)
         {
+            bool foundOperatorAtThisLocation=false;
             // Check for assignment, (can only have one assignment in expression)
             if ( (c == '=') && contains(evalOperators, '=') )
             {
                 foundOperator=true;
+                foundOperatorAtThisLocation=true;
                 breakpts.push_back(e);
             }
             else if ( (c == '+') && contains(evalOperators, '+') )
             {
                 foundOperator=true;
+                foundOperatorAtThisLocation=true;
                 if (e!=0)
                 {
                     breakpts.push_back(e);
@@ -54,6 +73,7 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
             else if ( (c == '-') && contains(evalOperators, '-') )
             {
                 foundOperator=true;
+                foundOperatorAtThisLocation=true;
                 if (e!=0)
                 {
                     breakpts.push_back(e);
@@ -62,17 +82,26 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
             else if ( (c == '*') && contains(evalOperators, '*') )
             {
                 foundOperator=true;
+                foundOperatorAtThisLocation=true;
                 breakpts.push_back(e);
             }
             else if ( (c == '/') && contains(evalOperators, '/') )
             {
                 foundOperator=true;
+                foundOperatorAtThisLocation=true;
                 breakpts.push_back(e);
             }
             else if ( (c == '^') && contains(evalOperators, '^') )
             {
                 foundOperator=true;
+                foundOperatorAtThisLocation=true;
                 breakpts.push_back(e);
+            }
+            // Make sure that next character is not also an operator (not allowed right now)
+            if (foundOperatorAtThisLocation && checkForDoubleOperators(e, exprString))
+            {
+                // Error in parsing
+                return false;
             }
         }
     }
@@ -148,19 +177,20 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
 //! @brief Process an expression string recursively to build an expression tree
 //! @param[in] exprString The expression string to process
 //! @param[out] rExprList A list of the resulting expression branches
-void interpretExpressionStringRecursive(std::string exprString, std::list<Expression> &rExprList)
+bool interpretExpressionStringRecursive(std::string exprString, std::list<Expression> &rExprList)
 {
-    branchExpressionOnOperator(exprString, "=", rExprList);
-    if (rExprList.empty())
+    bool branchOK;
+    branchOK = branchExpressionOnOperator(exprString, "=", rExprList);
+    if (branchOK && rExprList.empty())
     {
-        branchExpressionOnOperator(exprString, "+-", rExprList);
-        if (rExprList.empty())
+        branchOK = branchExpressionOnOperator(exprString, "+-", rExprList);
+        if (branchOK && rExprList.empty())
         {
-            branchExpressionOnOperator(exprString, "*/", rExprList);
-            if (rExprList.empty())
+            branchOK = branchExpressionOnOperator(exprString, "*/", rExprList);
+            if (branchOK && rExprList.empty())
             {
-                branchExpressionOnOperator(exprString, "^", rExprList);
-                if (rExprList.empty())
+                branchOK = branchExpressionOnOperator(exprString, "^", rExprList);
+                if (branchOK && rExprList.empty())
                 {
                     // This must be a value
                     rExprList.push_back(Expression(exprString, ValueT));
@@ -168,14 +198,16 @@ void interpretExpressionStringRecursive(std::string exprString, std::list<Expres
             }
         }
     }
+    return branchOK;
 }
 
 //! @brief Process an expression string recursively to build an expression tree
 //! @param[in] exprString The expression string to process
 //! @param[out] rExpr The resulting expression tree
-void interpretExpressionStringRecursive(std::string exprString, Expression &rExpr)
+bool interpretExpressionStringRecursive(std::string exprString, Expression &rExpr)
 {
     rExpr = Expression(exprString, AdditionT);
+    return !rExpr.empty();
 }
 
 //! @brief Default constructor
@@ -247,7 +279,14 @@ Expression &Expression::operator=(const Expression &other)
 //! @brief Check if this expression is empty
 bool Expression::empty() const
 {
-    return mRightExpressionString.empty();
+    if (isValue())
+    {
+        return mRightExpressionString.empty();
+    }
+    else
+    {
+        return mRightChildExpressions.empty();
+    }
 }
 
 //! @brief Check if this expression represents a value or variable
@@ -286,7 +325,7 @@ ExpressionOperatorT Expression::operatorType() const
 //! @return The value of the evaluated expression
 double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
 {
-    bool lhsOK,rhsOK;
+    bool lhsOK=false,rhsOK=false;
     double value=0;
 
     if (mOperator == ValueT)
@@ -344,6 +383,11 @@ double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
             else if (optype == ValueT || optype == AssignmentT || optype == PowerT)
             {
                 value = newValue;
+            }
+            // If evaluation error in child expression, abort and return false
+            if (!rhsOK)
+            {
+                return false;
             }
         }
     }

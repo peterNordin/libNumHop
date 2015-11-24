@@ -79,6 +79,9 @@ int main()
     expr.push_back("cat \n dog \r dog=5;cat=2;a=3;b=dog*cat*a;b");
     expr.push_back("-1-2-3*4-4-3");
     expr.push_back("-1-(2-3)*4-4-3");
+    expr.push_back("-(((-2-2)-3)*4)");
+
+    expr.push_back("#The following does not work!\n 2*-2; 2--3; 1+-3; 1-+3");
 
     for (size_t i=0; i<expr.size(); ++i)
     {
@@ -92,19 +95,26 @@ int main()
         for (list<string>::iterator it = exprlist.begin(); it!=exprlist.end(); ++it)
         {
             Expression e;
-            interpretExpressionStringRecursive(*it, e);
-            bool evalOK;
-            double value = e.evaluate(variableStorage, evalOK);
-            cout << "Evaluating: ";
-            if (evalOK)
+            bool interpretOK = interpretExpressionStringRecursive(*it, e);
+            if (interpretOK)
             {
-                cout << "OK    : ";
+                bool evalOK;
+                double value = e.evaluate(variableStorage, evalOK);
+                cout << "Evaluating: ";
+                if (evalOK)
+                {
+                    cout << "OK    : ";
+                }
+                else
+                {
+                    cout << "FAILED: ";
+                }
+                cout << e.print() << "\t\t Value: " << value << endl;
             }
             else
             {
-                cout << "FAILED: ";
+                cout << "Interpreting FAILED: " << *it << endl;
             }
-            cout << *it << " --> " << e.print() << "     Value: " << value << endl;
         }
     }
 

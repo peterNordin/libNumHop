@@ -40,8 +40,8 @@ protected:
     ExpressionOperatorT mOperator;
 };
 
-void interpretExpressionStringRecursive(std::string exprString, std::list<Expression> &rExp);
-void interpretExpressionStringRecursive(std::string exprString, Expression &rExp);
+bool interpretExpressionStringRecursive(std::string exprString, std::list<Expression> &rExprList);
+bool interpretExpressionStringRecursive(std::string exprString, Expression &rExpr);
 
 }
 
