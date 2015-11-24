@@ -91,8 +91,8 @@ int main()
 
         for (list<string>::iterator it = exprlist.begin(); it!=exprlist.end(); ++it)
         {
-            Expression2 e;
-            interpretExpressionStringRecursive2(*it, e);
+            Expression e;
+            interpretExpressionStringRecursive(*it, e);
             bool evalOK;
             double value = e.evaluate(variableStorage, evalOK);
             cout << "Evaluating: ";

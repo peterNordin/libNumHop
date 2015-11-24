@@ -3,7 +3,7 @@
 
 namespace numhop {
 
-//! @brief Defaul constructor
+//! @brief Default constructor
 VariableStorage::VariableStorage()
 {
     mpExternalStorage = 0;
@@ -41,14 +41,14 @@ bool VariableStorage::setVariable(const std::string &name, double value, bool &r
     return rDidSetExternally;
 }
 
-//! @brief Check if a giben name is a valid internal storage name, based on given dissallowed characters
+//! @brief Check if a given name is a valid internal storage name, based on given disallowed characters
 //! @param[in] name The name to check
 //! @returns True if the name is valid, else false
 bool VariableStorage::isNameInternalValid(const std::string &name) const
 {
-    for (size_t i=0; i<mDissallowedInternalNameChars.size(); ++i)
+    for (size_t i=0; i<mDisallowedInternalNameChars.size(); ++i)
     {
-        if (contains(name, mDissallowedInternalNameChars[i]))
+        if (contains(name, mDisallowedInternalNameChars[i]))
         {
             return false;
         }
@@ -56,11 +56,11 @@ bool VariableStorage::isNameInternalValid(const std::string &name) const
     return true;
 }
 
-//! @brief Set dissalowed characters in internal names
-//! @param[in] dissallowed A string containing dissalowed characters
-void VariableStorage::setDissallowedInternalNameCharacters(const std::string &dissallowed)
+//! @brief Set disallowed characters in internal names
+//! @param[in] disallowed A string containing disallowed characters
+void VariableStorage::setDisallowedInternalNameCharacters(const std::string &disallowed)
 {
-    mDissallowedInternalNameChars = dissallowed;
+    mDisallowedInternalNameChars = disallowed;
 }
 
 //! @brief Get the value of a variable

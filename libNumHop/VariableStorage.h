@@ -27,7 +27,7 @@ public:
     double value(const std::string &name, bool &rFound) const;
 
     bool isNameInternalValid(const std::string &name) const;
-    void setDissallowedInternalNameCharacters(const std::string &dissallowed);
+    void setDisallowedInternalNameCharacters(const std::string &disallowed);
 
     void setExternalStorage(ExternalVariableStorage *pExternalStorage);
     void setParentStorage(VariableStorage *pParentStorage);
@@ -36,7 +36,7 @@ private:
     ExternalVariableStorage *mpExternalStorage;
     VariableStorage *mpParentStorage;
     std::map<std::string, double> mVariableMap;
-    std::string mDissallowedInternalNameChars;
+    std::string mDisallowedInternalNameChars;
 };
 
 }

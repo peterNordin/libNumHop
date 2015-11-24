@@ -7,11 +7,9 @@
 namespace numhop {
 
 void extractExpressionRows(const std::string &expr, const char &comment, std::list<std::string> &rExpressions);
-void removeWhitespaces(std::string &rString);
+void removeAllWhitespaces(std::string &rString);
 void stripLeadingTrailingWhitespaces(std::string &rString);
 bool stripLeadingTrailingParanthesis(std::string &rString, bool &rDidStrip);
-void fixMultiDivision(std::string &rString);
-void fixMultiSubtraction(std::string &rString);
 char stripInitialSign(std::string &rString);
 void stripInitialPlus(std::string &rString);
 

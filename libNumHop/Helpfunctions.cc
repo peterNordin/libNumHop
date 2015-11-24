@@ -3,52 +3,6 @@
 using namespace std;
 namespace numhop {
 
-////! @brief Split a string into multiple rows based on ; or \n characters
-////! @param[in] expr The expression as a string
-////! @param[in] comment The comment character (ignore those lines)
-////! @param[out] rExpressions The list of expression lines
-//void splitExprRows(const string &expr, const char &comment, list<string> &rExpressions)
-//{
-//    size_t s=0;
-//    do
-//    {
-//        //! @todo this is inefficient, searching multiple times, need to improve and only search one (loop until)
-//        size_t e = expr.find_first_of(";",s);
-//        size_t en = expr.find_first_of("\n",s);
-//        size_t er = expr.find_first_of("\r",s);
-//        size_t ec = expr.find_first_of(comment,s);
-//        e = std::min(std::min(e,std::min(en,er)), ec);
-//        if (s<expr.size() && (e-s)>0)
-//        {
-//            string part = expr.substr(s,e-s);
-//            stripLeadingTrailingWhitespaces(part);
-//            if (!part.empty())
-//            {
-//                rExpressions.push_back(part);
-//            }
-//        }
-//        if (e == string::npos)
-//        {
-//            break;
-//        }
-//        // If comment skip to after next newline
-//        if (expr[e] == comment)
-//        {
-//            s = std::min(expr.find_first_of('\n', e),
-//                         expr.find_first_of('\r', e));
-//            if (s != string::npos)
-//            {
-//                s = s+1;
-//            }
-//        }
-//        // Else advance one step before the found ; or \n character
-//        else
-//        {
-//            s = e+1;
-//        }
-//    }while(true);
-//}
-
 //! @brief Split a string into multiple rows based on ; or \n characters
 //! @param[in] expr The expression as a string
 //! @param[in] comment The comment character (ignore those lines)
@@ -118,7 +72,7 @@ void stripLeadingTrailingWhitespaces(string &rString)
 
 //! @brief Remove all white spaces (space, tab) from a string
 //! @param[in,out] rString The string to process
-void removeWhitespaces(string &rString)
+void removeAllWhitespaces(string &rString)
 {
     for (size_t i=0; i<rString.size(); ++i)
     {
@@ -175,113 +129,10 @@ bool stripLeadingTrailingParanthesis(string &rString, bool &rDidStrip)
     return true;
 }
 
-//! @brief Convert multiple consecutive divisions into multiplications of fractions
-//! @details Example: 4/3/6/7 becomes 4/3*1/6*1/7
+
+//! @brief Strip the initial sign character (if it exists)
 //! @param[in,out] rString The string to process
-void fixMultiDivision(string &rString)
-{
-    bool hadParanthesis;
-    stripLeadingTrailingParanthesis(rString, hadParanthesis);
-
-    size_t i=0, numOpenP=0;
-    int ld=-1; // Last division index
-    while(i<rString.size())
-    {
-        char &c = rString[i];
-
-        if (c == '(')
-        {
-            numOpenP++;
-        }
-        else if (c == ')')
-        {
-            numOpenP--;
-        }
-
-        if (numOpenP==0)
-        {
-            if (c == '/')
-            {
-                if (ld < 0)
-                {
-                    ld = i;
-                }
-                else
-                {
-                    size_t insertAt = i;
-                    rString.insert(insertAt, "*1");
-                    ld = i+2;
-                    i=ld;
-                }
-            }
-            else if (c == '*')
-            {
-                ld = -1;
-            }
-        }
-        ++i;
-    }
-
-    if (hadParanthesis)
-    {
-        rString = "("+rString+")";
-    }
-
-}
-
-//! @brief Convert multiple consecutive subtractions into additions with 0
-//! @details Example: 1-2-3-4 becomes 1-2+0-3+0-4
-//! @param[in,out] rString The string to process
-void fixMultiSubtraction(string &rString)
-{
-    bool hadParanthesis;
-    stripLeadingTrailingParanthesis(rString, hadParanthesis);
-
-    size_t i=0,numOpenP=0;
-    int ls=-1; // Last subtraction index
-    while(i<rString.size())
-    {
-        char &c = rString[i];
-
-        if (c == '(')
-        {
-            numOpenP++;
-        }
-        else if (c == ')')
-        {
-            numOpenP--;
-        }
-
-        if (numOpenP==0)
-        {
-            if (c == '-')
-            {
-                if (ls < 0)
-                {
-                    ls = i;
-                }
-                else
-                {
-                    size_t insertAt = i;
-                    rString.insert(insertAt, "+0");
-                    ls = i+2;
-                    i=ls;
-                }
-            }
-            else if (c == '+')
-            {
-                ls = -1;
-            }
-        }
-        ++i;
-    }
-
-    if (hadParanthesis)
-    {
-        rString = "("+rString+")";
-    }
-}
-
+//! @returns + or - char, representing the sign of string (+ if no sign found)
 char stripInitialSign(string &rString)
 {
     if (!rString.empty())
@@ -299,6 +150,8 @@ char stripInitialSign(string &rString)
     return '+';
 }
 
+//! @brief Strip the initial + sign character (if it exists)
+//! @param[in,out] rString The string to process
 void stripInitialPlus(string &rString)
 {
     if (!rString.empty() && rString[0]=='+')
