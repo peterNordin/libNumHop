@@ -10,6 +10,21 @@ VariableStorage::VariableStorage()
     mpParentStorage = 0;
 }
 
+//! @brief Reserve a variable name, making it constant and impossible to change
+//! @param[in] name The name of the "variable"
+//! @param[in] value The constant value of the "variable"
+//! @returns True if the variable could be reserved, false if it was already reserved
+bool VariableStorage::reserveVariable(const std::string &name, double value)
+{
+    std::map<std::string,double>::iterator it = mReservedVariableMap.find(name);
+    if (it == mReservedVariableMap.end())
+    {
+        mReservedVariableMap.insert(std::pair<std::string,double>(name, value));
+        return true;
+    }
+    return false;
+}
+
 //! @brief Set a variable value
 //! @param[in] name The name of the variable
 //! @param[in] value The value
@@ -17,12 +32,21 @@ VariableStorage::VariableStorage()
 //! @returns True if the variable was set, false otherwise
 bool VariableStorage::setVariable(const std::string &name, double value, bool &rDidSetExternally)
 {
-    // First try to set it externally
     rDidSetExternally = false;
+
+    // Check if variable is reserved
+    std::map<std::string,double>::iterator it = mReservedVariableMap.find(name);
+    if (it != mReservedVariableMap.end())
+    {
+        return false;
+    }
+
+    // If not reserved, first try to set it externally
     if (mpExternalStorage)
     {
         rDidSetExternally = mpExternalStorage->setExternalValue(name, value);
     }
+
     // If we could not set externally, then set it internally
     if (!rDidSetExternally && isNameInternalValid(name))
     {
@@ -69,14 +93,24 @@ void VariableStorage::setDisallowedInternalNameCharacters(const std::string &dis
 //! @returns The value of the variable (if it was found, else a dummy value)
 double VariableStorage::value(const std::string &name, bool &rFound) const
 {
-    // First try to find variable internally
     rFound=false;
-    std::map<std::string, double>::const_iterator it = mVariableMap.find(name);
+
+    // First try to find reserved variable internally
+    std::map<std::string,double>::const_iterator it = mReservedVariableMap.find(name);
+    if (it != mReservedVariableMap.end())
+    {
+        rFound = true;
+        return it->second;
+    }
+
+    // Then try to find ordinary variable internally
+    it = mVariableMap.find(name);
     if (it != mVariableMap.end())
     {
         rFound=true;
         return it->second;
     }
+
     // Else try to find it externally
     if (mpExternalStorage)
     {
@@ -86,6 +120,7 @@ double VariableStorage::value(const std::string &name, bool &rFound) const
             return value;
         }
     }
+
     return 0;
 }
 
