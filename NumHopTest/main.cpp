@@ -51,12 +51,16 @@ int main()
     map<string, double> externalVars;
     MyVariableStorage extVariableStorage(&externalVars);
     VariableStorage variableStorage;
+    variableStorage.reserveVariable("pi", 3.1415);
 
     variableStorage.setExternalStorage(&extVariableStorage);
     cout << "libNumHop example executable!" << endl;
 
     externalVars.insert(pair<string,double>("dog", 55));
     externalVars.insert(pair<string,double>("cat", 66));
+    // This external pi should not be accessible since pi is reserved above
+    externalVars.insert(pair<string,double>("pi", 1000));
+
     std::vector<std::string> expr;
     expr.push_back("a=5;a=8;a;");
     expr.push_back("a=5;\n a=8\n a;");
@@ -91,7 +95,9 @@ int main()
     expr.push_back("1&0; 0&0; (-1)&1.5; 1&1; 1&1&1&0.4; 1&0&1");
     expr.push_back("2<3|4<2; 2<3&4<2; 2<3&4>2; x=2.5; (x>2&x<3)*1+(x>3&x<4)*2; x=3.6; (x>2&x<3)*1+(x>3&x<4)*2; ");
 
-    expr.push_back("#The following will (should) not work!\n 2*-2; a += 5; 1+1-; = 5; 0.5huj");
+    expr.push_back("#Here the reserved pi should be used, not the external one\n pi; a=pi*2");
+
+    expr.push_back("#The following will (should) not work!\n 2*-2; a += 5; 1+1-; = 5; 0.5huj; pi=7777");
 
     for (size_t i=0; i<expr.size(); ++i)
     {
