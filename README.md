@@ -26,8 +26,7 @@ d = d / 3              # d will now have the value 3
 For more examples see the included "test" executable
 
 ## Build instructions
-The library uses qmake and QtCreator as the build system, but the library is plain C++ and Qt is technically not required.
-The libNumHop files can be directly included in an external project or be build as a static library.
+The library uses CMake as the build system but the files can also be directly included in an external project.
 
 ## Implementation details
 The library builds a tree from the expressions, each detected operator will branch the tree and finally the leaves will contain numerical values or variable names.
