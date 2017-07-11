@@ -1,0 +1,17 @@
+# Use sudo-less trusty
+dist: trusty
+sudo: false
+
+# Enable C++ support
+language: cpp
+
+# Compiler selection
+compiler:
+  - gcc
+  - clang
+  
+# Build steps
+script:
+  - mkdir build
+  - cd build
+  - cmake .. && make
