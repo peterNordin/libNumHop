@@ -1,6 +1,8 @@
 # libNumHop
 
-A simple string parsing numerical calculation library written in C++.
+[![Build Status](https://travis-ci.org/peterNordin/libNumHop.svg?branch=master)](https://travis-ci.org/peterNordin/libNumHop)
+
+libNumHop is a simple string parsing numerical calculation library written in C++.
 It interprets strings with mathematical expressions and allows creation and reading of internal or external variables.
 Internal variables are local within the library, external variables are such variables that may be present in some other code using this library.
 
