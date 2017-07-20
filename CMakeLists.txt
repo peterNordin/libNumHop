@@ -19,4 +19,5 @@ install(TARGETS NumHop
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include )
 
+enable_testing()
 add_subdirectory(test)
