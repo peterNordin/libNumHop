@@ -26,7 +26,7 @@ ExternalProject_Get_Property(Catch-get source_dir)
 target_include_directories(Catch INTERFACE ${source_dir}/single_include)
 
 
-file(GLOB_RECURSE srcfiles *.cc)
+file(GLOB_RECURSE srcfiles *.cpp)
 add_executable(numhoptest ${srcfiles})
 target_link_libraries(numhoptest numhop Catch)
 add_dependencies(numhoptest Catch-get)

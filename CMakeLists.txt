@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_DEBUG_POSTFIX _d)
 
 
-file(GLOB_RECURSE srcfiles src/*.cc)
+file(GLOB_RECURSE srcfiles src/*.cpp)
 
 add_library(numhop STATIC ${srcfiles})
 target_include_directories(numhop PUBLIC
