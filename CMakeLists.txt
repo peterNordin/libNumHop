@@ -6,18 +6,18 @@ set(CMAKE_DEBUG_POSTFIX _d)
 
 file(GLOB_RECURSE srcfiles src/*.cc)
 
-add_library(NumHop STATIC ${srcfiles})
-target_include_directories(NumHop PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+add_library(numhop STATIC ${srcfiles})
+target_include_directories(numhop PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-install(TARGETS NumHop
+install(TARGETS numhop
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include )
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/ DESTINATION include )
 
 enable_testing()
 add_subdirectory(test)

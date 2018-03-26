@@ -28,7 +28,7 @@ target_include_directories(Catch INTERFACE ${source_dir}/single_include)
 
 file(GLOB_RECURSE srcfiles *.cc)
 add_executable(numhoptest ${srcfiles})
-target_link_libraries(numhoptest NumHop Catch)
+target_link_libraries(numhoptest numhop Catch)
 add_dependencies(numhoptest Catch-get)
 
 install(TARGETS numhoptest
