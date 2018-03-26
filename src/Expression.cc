@@ -1,5 +1,5 @@
-#include "Expression.h"
-#include "Helpfunctions.h"
+#include "numhop/Expression.h"
+#include "numhop/Helpfunctions.h"
 #include <cstdlib>
 #include <cmath>
 #include <vector>

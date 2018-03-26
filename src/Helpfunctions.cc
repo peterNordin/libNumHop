@@ -1,4 +1,4 @@
-#include "Helpfunctions.h"
+#include "numhop/Helpfunctions.h"
 
 using namespace std;
 namespace numhop {

@@ -1,5 +1,5 @@
-#include "VariableStorage.h"
-#include "Helpfunctions.h"
+#include "numhop/VariableStorage.h"
+#include "numhop/Helpfunctions.h"
 
 namespace numhop {
 
