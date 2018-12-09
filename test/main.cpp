@@ -100,6 +100,35 @@ void test_eval_fail(const std::string &expr, numhop::VariableStorage &variableSt
   REQUIRE(first_eval_ok == false);
 }
 
+void test_extract_variablenames(const std::string &expr, numhop::VariableStorage &variableStorage, std::list<std::string> expectednames, std::list<std::string> expectedvalidvars)
+{
+    std::set<std::string> valuenames, validvarnames;
+    numhop::Expression e;
+    bool interpretOK = numhop::interpretExpressionStringRecursive(expr, e);
+    REQUIRE(interpretOK == true);
+    e.extractNamedValues(valuenames);
+    std::list<std::string>::iterator it;
+    for (it=expectednames.begin(); it!=expectednames.end(); ++it) {
+        bool foundExpected = valuenames.find(*it)!=valuenames.end();
+        if (!foundExpected) {
+            std::string msg = "Did not find expected value name: ";
+            msg += *it;
+            FAIL(msg.c_str());
+        }
+    }
+    REQUIRE(valuenames.size() == expectednames.size());
+
+    e.extractValidVariableNames(variableStorage, validvarnames);
+    REQUIRE(expectedvalidvars.size() == validvarnames.size());
+    for (it=expectedvalidvars.begin(); it!=expectedvalidvars.end(); ++it) {
+        bool foundExpected = validvarnames.find(*it)!=validvarnames.end();
+        if (!foundExpected) {
+            std::string msg = "Did not find expected variable: ";
+            msg += *it;
+            FAIL(msg.c_str());
+        }
+    }
+}
 
 
 TEST_CASE("Variable Assignment") {
@@ -129,7 +158,7 @@ TEST_CASE("External Variables") {
 
 TEST_CASE("Reserved Variable") {
   numhop::VariableStorage vs;
-  vs.reserveVariable("pi", 3.1415);
+  vs.reserveNamedValue("pi", 3.1415);
   ApplicationVariables av;
   vs.setExternalStorage(&av);
 
@@ -248,6 +277,37 @@ TEST_CASE("Boolean Expressions") {
   test_allok("2<3 & 4>2", 1, vs);
   test_allok("x=2.5; (x>2&x<3)*1+(x>3&x<4)*2", 1, vs);
   test_allok("x=3.6; (x>2&x<3)*1+(x>3&x<4)*2", 2, vs);
+}
+
+TEST_CASE("Extract variable names") {
+
+  numhop::VariableStorage vs;
+  vs.reserveNamedValue("pi", 3.1415);
+  bool setOK;
+  vs.setVariable("ivar1", 1, setOK);
+  vs.setVariable("ivar2", 2, setOK);
+  ApplicationVariables av;
+  av.addVariable("evar1", 1);
+  av.addVariable("evar2", 2);
+  vs.setExternalStorage(&av);
+
+  std::list<std::string> expectedNamedValues, expectedValidVariableNames;
+  expectedNamedValues.push_back("ivar1");
+  expectedValidVariableNames = expectedNamedValues;
+  test_extract_variablenames("ivar1", vs, expectedNamedValues, expectedValidVariableNames);
+  test_extract_variablenames("-ivar1", vs, expectedNamedValues, expectedValidVariableNames);
+
+  expectedNamedValues.push_back("ivar2");
+  expectedNamedValues.push_back("evar1");
+  expectedNamedValues.push_back("evar2");
+  expectedNamedValues.push_back("pi");
+  expectedNamedValues.push_back("invalid");
+  expectedValidVariableNames = expectedNamedValues;
+  // remove pi and invalid
+  expectedValidVariableNames.pop_back();
+  expectedValidVariableNames.pop_back();
+  const char* expr = "ivar2 = (ivar1 + evar1 + evar2 -3*ivar1)*pi^invalid";
+  test_extract_variablenames(expr, vs, expectedNamedValues, expectedValidVariableNames);
 }
 
 TEST_CASE("Expressions that should fail") {
