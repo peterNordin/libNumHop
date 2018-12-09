@@ -70,6 +70,15 @@ bool fixMultiOperators(size_t e, std::string &expr)
     return true;
 }
 
+double decideIfConstantOrVariable(const std::string &expr, bool &rIsConstant, bool &rIsVariableName)
+{
+    char* pEnd;
+    double value = strtod(expr.c_str(), &pEnd);
+    rIsConstant = (pEnd != expr.c_str()) && (pEnd == expr.c_str()+expr.size());
+    rIsVariableName = !rIsConstant;
+    return value;
+}
+
 //! @brief Check if a char is fisrt part of an exponential notation
 //! @param[in] expr The expression string
 //! @param[in] i The index of the first char efter the e or E
@@ -355,7 +364,7 @@ Expression::Expression(const std::string &exprString, ExpressionOperatorT op)
     {
         if (!mRightExpressionString.empty())
         {
-            mHasValue = true;
+            mConstantValue = decideIfConstantOrVariable(mRightExpressionString, mHasConstantValue, mHasVariableValue);
             mIsValid = true;
         }
     }
@@ -369,7 +378,7 @@ Expression::Expression(const std::string &exprString, ExpressionOperatorT op)
             mRightChildExpressions.clear();
             if (!mRightExpressionString.empty())
             {
-                mHasValue = true;
+                mConstantValue = decideIfConstantOrVariable(mRightExpressionString, mHasConstantValue, mHasVariableValue);
                 mIsValid = true;
             }
             else
@@ -436,7 +445,7 @@ bool Expression::empty() const
 //! @brief Check if this expression has a value or variable in its right expression string
 bool Expression::hasValue() const
 {
-    return mHasValue;
+    return mHasConstantValue || mHasVariableValue;
 }
 
 //! @brief Check if this expression represents a constant value
@@ -444,6 +453,13 @@ bool Expression::hasValue() const
 bool Expression::hasConstantValue() const
 {
     return mHasConstantValue;
+}
+
+//! @brief Check if this expression represents a variable name value
+//! @note Evaluate must have been called at least once before this function returns a relevant value
+bool Expression::hasVariableValue() const
+{
+    return mHasVariableValue;
 }
 
 //! @brief Recursively check if an expression tree is valid after interpretation
@@ -514,27 +530,12 @@ double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
         rEvalOK = true;
         return mConstantValue;
     }
-    // If this expression contains a value then evaluate it
-    else if (mHasValue)
+    // The "value" seems to be a variable name
+    else if (mHasVariableValue)
     {
         lhsOK=true;
-        char* pEnd;
-        value = strtod(mRightExpressionString.c_str(), &pEnd);
-        rhsOK = (pEnd != mRightExpressionString.c_str()) &&
-                (pEnd == mRightExpressionString.c_str()+mRightExpressionString.size());
-        if (!rhsOK)
-        {
-            // The "value" seems to be a variable name
-            // Lookup variable name in variable storage instead
-            value = rVariableStorage.value(mRightExpressionString, rhsOK);
-        }
-        else
-        {
-            // If we could evaluate the string directly then this is a constant value
-            // we can remember that so that the next evaluation is faster
-            mHasConstantValue = true;
-            mConstantValue = value;
-        }
+        // Lookup variable name in variable storage instead
+        value = rVariableStorage.value(mRightExpressionString, rhsOK);
     }
     else if (mOperator == AssignmentT)
     {
@@ -677,7 +678,7 @@ std::string Expression::print()
         }
         fullexp = l+">"+r;
     }
-    else if (mHasValue)
+    else if (hasValue())
     {
         fullexp = mRightExpressionString;
         if (mHadRightOuterParanthesis)
@@ -731,8 +732,8 @@ void Expression::commonConstructorCode()
     mOperator = UndefinedT;
     mHadRightOuterParanthesis = false;
     mHadLeftOuterParanthesis = false;
-    mHasValue = false;
     mHasConstantValue = false;
+    mHasVariableValue = false;
     mIsValid = false;
     mConstantValue = 0;
 }
@@ -748,8 +749,8 @@ void Expression::copyFromOther(const Expression &other)
     mRightChildExpressions = other.mRightChildExpressions;
     mLeftExpressionString = other.mLeftExpressionString;
     mRightExpressionString = other.mRightExpressionString;
-    mHasValue = other.mHasValue;
     mHasConstantValue = other.mHasConstantValue;
+    mHasVariableValue = other.mHasVariableValue;
     mConstantValue = other.mConstantValue;
     mIsValid = other.mIsValid;
 }
