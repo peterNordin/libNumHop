@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <set>
 #include "VariableStorage.h"
 
 namespace numhop {
@@ -33,6 +34,8 @@ public:
     ExpressionOperatorT operatorType() const;
 
     double evaluate(VariableStorage &rVariableStorage, bool &rEvalOK);
+    void extractNamedValues(std::set<std::string> &rNamedValues) const;
+    void extractValidVariableNames(const VariableStorage &rVariableStorage, std::set<std::string> &rVariableNames) const;
 
     std::string print();
 

@@ -622,6 +622,42 @@ double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
     return value;
 }
 
+void Expression::extractNamedValues(std::set<std::string> &rNamedValues) const
+{
+    std::list<Expression>::const_iterator it;
+    for (it=mRightChildExpressions.begin(); it!=mRightChildExpressions.end(); ++it) {
+        if(it->hasVariableValue()) {
+            rNamedValues.insert(it->exprString());
+        }
+        it->extractNamedValues(rNamedValues);
+    }
+    for (it=mLeftChildExpressions.begin(); it!=mLeftChildExpressions.end(); ++it) {
+        if(it->hasVariableValue()) {
+            rNamedValues.insert(it->exprString());
+        }
+        it->extractNamedValues(rNamedValues);
+    }
+    if (mOperator == AssignmentT) {
+        rNamedValues.insert(mLeftExpressionString);
+    }
+    if (mIsNamedValue) {
+        rNamedValues.insert(mRightExpressionString);
+    }
+}
+
+void Expression::extractValidVariableNames(const VariableStorage &rVariableStorage, std::set<std::string> &rVariableNames) const
+{
+    extractNamedValues(rVariableNames);
+    std::set<std::string>::iterator it;
+    for (it=rVariableNames.begin(); it!=rVariableNames.end(); ) {
+        if (!rVariableStorage.hasVariableName(*it)) {
+            rVariableNames.erase(it++);
+        } else {
+            ++it;
+        }
+    }
+}
+
 //! @brief Prints the expression (as it will be evaluated) to a string
 std::string Expression::print()
 {

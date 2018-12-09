@@ -23,10 +23,11 @@ class VariableStorage
 {
 public:
     VariableStorage();
-    bool reserveVariable(const std::string &name, double value);
+    bool reserveNamedValue(const std::string &name, double value);
     bool setVariable(const std::string &name, double value, bool &rDidSetExternally);
     double value(const std::string &name, bool &rFound) const;
 
+    bool hasVariableName(const std::string &name) const;
     bool isNameInternalValid(const std::string &name) const;
     void setDisallowedInternalNameCharacters(const std::string &disallowed);
 
@@ -39,7 +40,7 @@ private:
     ExternalVariableStorage *mpExternalStorage;
     VariableStorage *mpParentStorage;
     std::map<std::string, double> mVariableMap;
-    std::map<std::string, double> mReservedVariableMap;
+    std::map<std::string, double> mReservedNameVauleMap;
     std::string mDisallowedInternalNameChars;
 };
 
