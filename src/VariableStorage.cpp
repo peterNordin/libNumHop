@@ -10,7 +10,7 @@ VariableStorage::VariableStorage()
     mpParentStorage = 0;
 }
 
-//! @brief Reserve a variable name, making it constant and impossible to change
+//! @brief Reserve a value name, making it constant and impossible to change
 //! @param[in] name The name of the value
 //! @param[in] value The constant value
 //! @returns True if the name could be reserved, false if it was already reserved
@@ -34,7 +34,7 @@ bool VariableStorage::setVariable(const std::string &name, double value, bool &r
 {
     rDidSetExternally = false;
 
-    // Check if variable is reserved
+    // Check if name is reserved
     std::map<std::string,double>::iterator it = mReservedNameVauleMap.find(name);
     if (it != mReservedNameVauleMap.end())
     {
@@ -87,7 +87,7 @@ void VariableStorage::setDisallowedInternalNameCharacters(const std::string &dis
     mDisallowedInternalNameChars = disallowed;
 }
 
-//! @brief Get the value of a variable
+//! @brief Get the value of a variable or reserved constant value
 //! @param[in] name The name of the variable
 //! @param[out] rFound Indicates if the variable was found
 //! @returns The value of the variable (if it was found, else a dummy value)
@@ -124,6 +124,9 @@ double VariableStorage::value(const std::string &name, bool &rFound) const
     return 0;
 }
 
+//! @brief Check if a given name is an existing variable (not reserved value)
+//! @param[in] name The variable name to look for
+//! @return true if found else false
 bool VariableStorage::hasVariableName(const std::string &name) const
 {
     // Try to find ordinary variable internally

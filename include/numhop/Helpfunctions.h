@@ -6,7 +6,7 @@
 
 namespace numhop {
 
-void extractExpressionRows(const std::string &expr, const char &comment, std::list<std::string> &rExpressions);
+void extractExpressionRows(const std::string &script, const char &commentChar, std::list<std::string> &rScriptExpressions);
 void removeAllWhitespaces(std::string &rString);
 void stripLeadingTrailingWhitespaces(std::string &rString);
 bool stripLeadingTrailingParanthesis(std::string &rString, bool &rDidStrip);

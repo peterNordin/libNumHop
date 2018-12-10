@@ -3,18 +3,18 @@
 using namespace std;
 namespace numhop {
 
-//! @brief Split a string into multiple rows based on ; or \n characters
-//! @param[in] expr The expression as a string
+//! @brief Split a script of multiple rows into individual lines based on ; or \n characters
+//! @param[in] script The expression script
 //! @param[in] comment The comment character (ignore those lines)
-//! @param[out] rExpressions The list of expression lines
-void extractExpressionRows(const string &expr, const char &comment, list<string> &rExpressions)
+//! @param[out] rScriptExpressions The list of expression lines
+void extractExpressionRows(const string &script, const char &commentChar, list<string> &rScriptExpressions)
 {
     size_t s=0, e;
-    for (e=0; e<expr.size(); ++e)
+    for (e=0; e<script.size(); ++e)
     {
-        const char &c = expr[e];
-        bool foundSeparator = (c == '\n' || c == '\r' || c == ';' || c == comment);
-        bool foundEOS = (e+1 == expr.size());
+        const char &c = script[e];
+        bool foundSeparator = (c == '\n' || c == '\r' || c == ';' || c == commentChar);
+        bool foundEOS = (e+1 == script.size());
         if (foundSeparator || foundEOS)
         {
             // Handle end of string, we need to read the last char
@@ -23,22 +23,22 @@ void extractExpressionRows(const string &expr, const char &comment, list<string>
                 ++e;
             }
 
-            if (s<expr.size() && (e-s)>0)
+            if (s<script.size() && (e-s)>0)
             {
-                string part = expr.substr(s,e-s);
+                string part = script.substr(s,e-s);
                 stripLeadingTrailingWhitespaces(part);
                 if (!part.empty())
                 {
-                    rExpressions.push_back(part);
+                    rScriptExpressions.push_back(part);
                 }
             }
 
             // If comment skip to after next newline
-            if (c == comment)
+            if (c == commentChar)
             {
-                for (; e<expr.size(); ++e)
+                for (; e<script.size(); ++e)
                 {
-                    const char &cc = expr[e];
+                    const char &cc = script[e];
                     if (cc == '\n' || cc == '\r')
                     {
                         // Advance (start) one step from the found \n character

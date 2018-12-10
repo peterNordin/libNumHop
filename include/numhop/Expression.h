@@ -23,9 +23,9 @@ public:
     Expression& operator= (const Expression &other);
 
     bool empty() const;
-    bool hasValue() const;
-    bool hasConstantValue() const;
-    bool hasVariableValue() const;
+    bool isValue() const;
+    bool isNumericConstant() const;
+    bool isNamedValue() const;
     bool isValid() const;
 
     const std::string &exprString() const;
@@ -35,7 +35,7 @@ public:
 
     double evaluate(VariableStorage &rVariableStorage, bool &rEvalOK);
     void extractNamedValues(std::set<std::string> &rNamedValues) const;
-    void extractValidVariableNames(const VariableStorage &rVariableStorage, std::set<std::string> &rVariableNames) const;
+    void extractValidVariableNames(const VariableStorage &variableStorage, std::set<std::string> &rVariableNames) const;
 
     std::string print();
 
@@ -44,10 +44,10 @@ protected:
     void copyFromOther(const Expression &other);
 
     std::string mLeftExpressionString, mRightExpressionString;
-    bool mHadLeftOuterParanthesis, mHadRightOuterParanthesis;
     std::list<Expression> mLeftChildExpressions, mRightChildExpressions;
-    bool mHasConstantValue, mHasVariableValue, mIsValid;
-    double mConstantValue;
+    bool mHadLeftOuterParanthesis, mHadRightOuterParanthesis;
+    bool mIsNumericConstant, mIsNamedValue, mIsValid;
+    double mNumericConstantValue;
     ExpressionOperatorT mOperator;
 };
 

@@ -70,12 +70,12 @@ bool fixMultiOperators(size_t e, std::string &expr)
     return true;
 }
 
-double decideIfConstantOrVariable(const std::string &expr, bool &rIsConstant, bool &rIsVariableName)
+double decideIfNumericConstantOrNamedValue(const std::string &expr, bool &rIsNumericConstant, bool &rIsNamedValue)
 {
     char* pEnd;
     double value = strtod(expr.c_str(), &pEnd);
-    rIsConstant = (pEnd != expr.c_str()) && (pEnd == expr.c_str()+expr.size());
-    rIsVariableName = !rIsConstant;
+    rIsNumericConstant = (pEnd != expr.c_str()) && (pEnd == expr.c_str()+expr.size());
+    rIsNamedValue = !rIsNumericConstant;
     return value;
 }
 
@@ -364,7 +364,7 @@ Expression::Expression(const std::string &exprString, ExpressionOperatorT op)
     {
         if (!mRightExpressionString.empty())
         {
-            mConstantValue = decideIfConstantOrVariable(mRightExpressionString, mHasConstantValue, mHasVariableValue);
+            mNumericConstantValue = decideIfNumericConstantOrNamedValue(mRightExpressionString, mIsNumericConstant, mIsNamedValue);
             mIsValid = true;
         }
     }
@@ -378,7 +378,7 @@ Expression::Expression(const std::string &exprString, ExpressionOperatorT op)
             mRightChildExpressions.clear();
             if (!mRightExpressionString.empty())
             {
-                mConstantValue = decideIfConstantOrVariable(mRightExpressionString, mHasConstantValue, mHasVariableValue);
+                mNumericConstantValue = decideIfNumericConstantOrNamedValue(mRightExpressionString, mIsNumericConstant, mIsNamedValue);
                 mIsValid = true;
             }
             else
@@ -432,7 +432,7 @@ Expression &Expression::operator=(const Expression &other)
 //! @brief Check if this expression is empty
 bool Expression::empty() const
 {
-    if (hasValue())
+    if (isValue())
     {
         return mRightExpressionString.empty();
     }
@@ -442,24 +442,22 @@ bool Expression::empty() const
     }
 }
 
-//! @brief Check if this expression has a value or variable in its right expression string
-bool Expression::hasValue() const
+//! @brief Check if this expression is a value, a numeric constant or named value in its right expression string
+bool Expression::isValue() const
 {
-    return mHasConstantValue || mHasVariableValue;
+    return mIsNumericConstant || mIsNamedValue;
 }
 
-//! @brief Check if this expression represents a constant value
-//! @note Evaluate must have been called at least once before this function returns a relevant value
-bool Expression::hasConstantValue() const
+//! @brief Check if this expression represents a numeric constant value
+bool Expression::isNumericConstant() const
 {
-    return mHasConstantValue;
+    return mIsNumericConstant;
 }
 
-//! @brief Check if this expression represents a variable name value
-//! @note Evaluate must have been called at least once before this function returns a relevant value
-bool Expression::hasVariableValue() const
+//! @brief Check if this expression represents a named value
+bool Expression::isNamedValue() const
 {
-    return mHasVariableValue;
+    return mIsNamedValue;
 }
 
 //! @brief Recursively check if an expression tree is valid after interpretation
@@ -515,7 +513,7 @@ ExpressionOperatorT Expression::operatorType() const
 }
 
 //! @brief Evaluate the expression
-//! @param[in,out] rVariableStorage The variable storage to use for setting or getting variable values
+//! @param[in,out] rVariableStorage The variable storage to use for setting or getting variables or named values
 //! @param[out] rEvalOK Indicates whether evaluation was successful or not
 //! @return The value of the evaluated expression
 double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
@@ -523,18 +521,17 @@ double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
     bool lhsOK=false,rhsOK=false;
     double value=0;
 
-    // If this is a constant value, then return it
-    if (mHasConstantValue)
+    // If this is a numeric constant value, then return it
+    if (mIsNumericConstant)
     {
-        // We take a shortcut here and return immediately
         rEvalOK = true;
-        return mConstantValue;
+        return mNumericConstantValue;
     }
-    // The "value" seems to be a variable name
-    else if (mHasVariableValue)
+    // The expression seems to be a named value or variable name
+    else if (mIsNamedValue)
     {
         lhsOK=true;
-        // Lookup variable name in variable storage instead
+        // Lookup named value or variable in the variable storage instead
         value = rVariableStorage.value(mRightExpressionString, rhsOK);
     }
     else if (mOperator == AssignmentT)
@@ -622,17 +619,19 @@ double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
     return value;
 }
 
+//! @brief Extract all named values from expression
+//! @param[out] rNamedValues All named values (including constants such as pi and invalid variable names)
 void Expression::extractNamedValues(std::set<std::string> &rNamedValues) const
 {
     std::list<Expression>::const_iterator it;
     for (it=mRightChildExpressions.begin(); it!=mRightChildExpressions.end(); ++it) {
-        if(it->hasVariableValue()) {
+        if(it->isNamedValue()) {
             rNamedValues.insert(it->exprString());
         }
         it->extractNamedValues(rNamedValues);
     }
     for (it=mLeftChildExpressions.begin(); it!=mLeftChildExpressions.end(); ++it) {
-        if(it->hasVariableValue()) {
+        if(it->isNamedValue()) {
             rNamedValues.insert(it->exprString());
         }
         it->extractNamedValues(rNamedValues);
@@ -645,12 +644,15 @@ void Expression::extractNamedValues(std::set<std::string> &rNamedValues) const
     }
 }
 
-void Expression::extractValidVariableNames(const VariableStorage &rVariableStorage, std::set<std::string> &rVariableNames) const
+//! @brief Extract named values that have a valid match in the VariableStorage
+//! @param[in] variableStorage The variable storage in which to look for variable names
+//! @param[out] rVariableNames A set of unique variable names from the expression, named values (constants are not included)
+void Expression::extractValidVariableNames(const VariableStorage &variableStorage, std::set<std::string> &rVariableNames) const
 {
     extractNamedValues(rVariableNames);
     std::set<std::string>::iterator it;
     for (it=rVariableNames.begin(); it!=rVariableNames.end(); ) {
-        if (!rVariableStorage.hasVariableName(*it)) {
+        if (!variableStorage.hasVariableName(*it)) {
             rVariableNames.erase(it++);
         } else {
             ++it;
@@ -714,7 +716,7 @@ std::string Expression::print()
         }
         fullexp = l+">"+r;
     }
-    else if (hasValue())
+    else if (isValue())
     {
         fullexp = mRightExpressionString;
         if (mHadRightOuterParanthesis)
@@ -768,10 +770,10 @@ void Expression::commonConstructorCode()
     mOperator = UndefinedT;
     mHadRightOuterParanthesis = false;
     mHadLeftOuterParanthesis = false;
-    mHasConstantValue = false;
-    mHasVariableValue = false;
+    mIsNumericConstant = false;
+    mIsNamedValue = false;
     mIsValid = false;
-    mConstantValue = 0;
+    mNumericConstantValue = 0;
 }
 
 //! @brief Copy from other expression (help function for assignment and copy constructor)
@@ -785,9 +787,9 @@ void Expression::copyFromOther(const Expression &other)
     mRightChildExpressions = other.mRightChildExpressions;
     mLeftExpressionString = other.mLeftExpressionString;
     mRightExpressionString = other.mRightExpressionString;
-    mHasConstantValue = other.mHasConstantValue;
-    mHasVariableValue = other.mHasVariableValue;
-    mConstantValue = other.mConstantValue;
+    mIsNumericConstant = other.mIsNumericConstant;
+    mIsNamedValue = other.mIsNamedValue;
+    mNumericConstantValue = other.mNumericConstantValue;
     mIsValid = other.mIsValid;
 }
 
