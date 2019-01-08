@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 namespace numhop {
 
@@ -98,6 +99,176 @@ bool isExpNot(const std::string &expr, const size_t i)
     }
     return false;
 }
+
+bool notAlphaNum(const char c)
+{
+    return !isalnum(c);
+}
+
+//! @brief Check if expression matches to form abc123(something)
+bool expressionIsFunctionCall(std::string& expr)
+{
+    if (expr.empty()) {
+        return false;
+    }
+
+    size_t last = expr.size()-1;
+
+    if (isalpha(expr[0]) && expr[last]==')') {
+        std::string::iterator it = std::find_if(expr.begin(), expr.end(), notAlphaNum);
+        if ( (it != expr.end()) && (*it == '(') ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool splitFunctionCallExpression(const std::string& expr, std::string& funcName, std::list<Expression>& args)
+{
+    std::string::size_type arg_start = expr.find_first_of('(');
+    std::string::size_type args_end = expr.find_last_of(')');
+
+    funcName = expr.substr(0, arg_start);
+
+    ++arg_start;
+    while (arg_start < args_end) {
+        std::string::size_type arg_end = expr.find_first_of(',', arg_start);
+        if (arg_end == std::string::npos) {
+            arg_end = args_end;
+        }
+        args.push_back(Expression(expr.substr(arg_start, arg_end-arg_start), AdditionT));
+        arg_start = arg_end+1;
+    }
+
+    return true;
+}
+
+template <typename T>
+T min(T a, T b)
+{
+    return std::min(a,b);
+}
+
+template <typename T>
+T max(T a, T b)
+{
+    return std::max(a,b);
+}
+
+class FunctionHandler
+{
+public:
+    typedef double(*onearg_function)(double);
+    typedef double(*twoarg_function)(double, double);
+
+    FunctionHandler() : mIdCounter(0)
+    {
+        // register single argument built-in math functions
+        registerFunction("cos", static_cast<onearg_function>(&cos));
+        registerFunction("sin", static_cast<onearg_function>(&sin));
+        registerFunction("tan", static_cast<onearg_function>(&tan));
+        registerFunction("acos", static_cast<onearg_function>(&acos));
+        registerFunction("asin", static_cast<onearg_function>(&asin));
+        registerFunction("atan", static_cast<onearg_function>(&atan));
+
+        registerFunction("cosh", static_cast<onearg_function>(&cosh));
+        registerFunction("sinh", static_cast<onearg_function>(&sinh));
+        registerFunction("tanh", static_cast<onearg_function>(&tanh));
+
+        registerFunction("exp", static_cast<onearg_function>(&exp));
+        registerFunction("log", static_cast<onearg_function>(&log));
+        registerFunction("log10", static_cast<onearg_function>(&log10));
+
+        registerFunction("sqrt", static_cast<onearg_function>(&sqrt));
+
+        registerFunction("ceil", static_cast<onearg_function>(&ceil));
+        registerFunction("floor", static_cast<onearg_function>(&floor));
+        registerFunction("abs", static_cast<onearg_function>(&fabs));
+
+        // register two argument built-in math functions
+        registerFunction("atan2", static_cast<twoarg_function>(&atan2));
+        registerFunction("pow", static_cast<twoarg_function>(&pow));
+        registerFunction("fmod", static_cast<twoarg_function>(&fmod));
+        registerFunction("min", static_cast<twoarg_function>(&min<double>));
+        registerFunction("max", static_cast<twoarg_function>(&max<double>));
+
+    }
+
+    int registerFunction(const std::string& name, onearg_function funcPointer)
+    {
+        int id = registerName(name);
+        mOneArgFuncs.insert(std::pair<size_t, onearg_function>(id, funcPointer));
+        return id;
+    }
+
+    int registerFunction(const std::string& name, twoarg_function funcPointer)
+    {
+        int id = registerName(name);
+        mTwoArgFuncs.insert(std::pair<size_t, twoarg_function>(id, funcPointer));
+        return id;
+    }
+
+    int lookupFunctionId(const std::string& name, const size_t numArgs) const
+    {
+        std::map<std::string, int>::const_iterator it = mNameIdMap.find(name);
+        int id = (it != mNameIdMap.end()) ? it->second : -1;
+        switch (numArgs) {
+        case 1 :
+            return (mOneArgFuncs.find(id) != mOneArgFuncs.end()) ? id : -1;
+        case 2 :
+            return (mTwoArgFuncs.find(id) != mTwoArgFuncs.end()) ? id : -1;
+        default:
+            return -1;
+        }
+    }
+
+    double callFunction(const int id, const std::list<Expression>& args, VariableStorage &rVariableStorage, bool &rEvalOK)
+    {
+        if (id >= 0) {
+            const size_t numArgs = args.size();
+            if (numArgs == 1) {
+                double arg1 = args.front().evaluate(rVariableStorage, rEvalOK);
+                return mOneArgFuncs[id](arg1);
+            }
+            else if (numArgs == 2) {
+                bool ok1,ok2;
+                double arg1 = args.front().evaluate(rVariableStorage, ok1);
+                double arg2 = (++args.begin())->evaluate(rVariableStorage, ok2);
+                rEvalOK = ok1 && ok2;
+                return mTwoArgFuncs[id](arg1, arg2);
+            }
+        }
+        rEvalOK=false;
+        return -1;
+    }
+
+    std::vector<std::string> registeredFunctionNames() const
+    {
+        std::vector<std::string> names;
+        names.reserve(mNameIdMap.size());
+        std::map<std::string, int>::const_iterator it;
+        for (it=mNameIdMap.begin(); it!=mNameIdMap.end(); ++it) {
+            names.push_back(it->first);
+        }
+        return names;
+    }
+
+protected:
+    int registerName(const std::string& name)
+    {
+        mNameIdMap.insert(std::pair<std::string, size_t>(name, mIdCounter));
+        return mIdCounter++;
+    }
+
+    int mIdCounter;
+    std::map<std::string, int> mNameIdMap;
+    std::map<int, onearg_function> mOneArgFuncs;
+    std::map<int, twoarg_function> mTwoArgFuncs;
+    //! @todo Maybe better to use vectors for faster "constant" lookup
+};
+
+static FunctionHandler gFunctionHandler;
+
 
 //! @brief Find an operator and branch the expression tree at this point
 //! @param[in] exprString The expression string to process
@@ -321,8 +492,14 @@ bool interpretExpressionStringRecursive(std::string exprString, std::list<Expres
                 branchOK = branchExpressionOnOperator(exprString, "^<>", rExprList);
                 if (branchOK && rExprList.empty())
                 {
-                    // This must be a value
-                    rExprList.push_back(Expression(exprString, ValueT));
+                    // This must be a value or a function call
+                    const bool isFuncCall = expressionIsFunctionCall(exprString);
+                    if (isFuncCall) {
+                        rExprList.push_back(Expression(exprString, FunctionCallT));
+                    }
+                    else {
+                        rExprList.push_back(Expression(exprString, ValueT));
+                    }
                 }
             }
         }
@@ -366,6 +543,14 @@ Expression::Expression(const std::string &exprString, ExpressionOperatorT op)
         {
             mNumericConstantValue = decideIfNumericConstantOrNamedValue(mRightExpressionString, mIsNumericConstant, mIsNamedValue);
             mIsValid = true;
+        }
+    }
+    else if (mOperator == FunctionCallT)
+    {
+        mIsValid = splitFunctionCallExpression(mRightExpressionString, mLeftExpressionString, mRightChildExpressions);
+        if (mIsValid) {
+            mFunctionId = gFunctionHandler.lookupFunctionId(mLeftExpressionString, mRightChildExpressions.size());
+            mIsValid = (mFunctionId >= 0);
         }
     }
     else
@@ -516,7 +701,7 @@ ExpressionOperatorT Expression::operatorType() const
 //! @param[in,out] rVariableStorage The variable storage to use for setting or getting variables or named values
 //! @param[out] rEvalOK Indicates whether evaluation was successful or not
 //! @return The value of the evaluated expression
-double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
+double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK) const
 {
     bool lhsOK=false,rhsOK=false;
     double value=0;
@@ -565,10 +750,15 @@ double Expression::evaluate(VariableStorage &rVariableStorage, bool &rEvalOK)
         double r = mRightChildExpressions.front().evaluate(rVariableStorage, rhsOK);
         value = double(l>r);
     }
+    else if (mOperator == FunctionCallT)
+    {
+        lhsOK=true;
+        value = gFunctionHandler.callFunction(mFunctionId, mRightChildExpressions, rVariableStorage, rhsOK);
+    }
     else
     {
         lhsOK=true;
-        std::list<Expression>::iterator it;
+        std::list<Expression>::const_iterator it;
         for (it=mRightChildExpressions.begin(); it!=mRightChildExpressions.end(); ++it)
         {
             ExpressionOperatorT optype = it->operatorType();
@@ -716,6 +906,16 @@ std::string Expression::print()
         }
         fullexp = l+">"+r;
     }
+    else if (mOperator == FunctionCallT)
+    {
+        fullexp = mLeftExpressionString+'(';
+        std::list<Expression>::iterator it;
+        for (it=mRightChildExpressions.begin(); it!=mRightChildExpressions.end(); ++it) {
+            fullexp += it->print();
+            fullexp += ',';
+        }
+        fullexp[fullexp.size()-1] = ')';
+    }
     else if (isValue())
     {
         fullexp = mRightExpressionString;
@@ -773,6 +973,7 @@ void Expression::commonConstructorCode()
     mIsNumericConstant = false;
     mIsNamedValue = false;
     mIsValid = false;
+    mFunctionId = -1;
     mNumericConstantValue = 0;
 }
 
@@ -790,6 +991,7 @@ void Expression::copyFromOther(const Expression &other)
     mIsNumericConstant = other.mIsNumericConstant;
     mIsNamedValue = other.mIsNamedValue;
     mNumericConstantValue = other.mNumericConstantValue;
+    mFunctionId = other.mFunctionId;
     mIsValid = other.mIsValid;
 }
 

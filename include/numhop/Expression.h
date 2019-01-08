@@ -10,7 +10,7 @@ namespace numhop {
 
 enum ExpressionOperatorT {AssignmentT, AdditionT, SubtractionT, MultiplicationT,
                           DivisionT, PowerT, LessThenT, GreaterThenT, OrT, AndT,
-                          ValueT, UndefinedT};
+                          ValueT, FunctionCallT, UndefinedT};
 
 class Expression
 {
@@ -33,7 +33,7 @@ public:
     const std::string &rightExprString() const;
     ExpressionOperatorT operatorType() const;
 
-    double evaluate(VariableStorage &rVariableStorage, bool &rEvalOK);
+    double evaluate(VariableStorage &rVariableStorage, bool &rEvalOK) const;
     void extractNamedValues(std::set<std::string> &rNamedValues) const;
     void extractValidVariableNames(const VariableStorage &variableStorage, std::set<std::string> &rVariableNames) const;
 
@@ -47,6 +47,7 @@ protected:
     std::list<Expression> mLeftChildExpressions, mRightChildExpressions;
     bool mHadLeftOuterParanthesis, mHadRightOuterParanthesis;
     bool mIsNumericConstant, mIsNamedValue, mIsValid;
+    int mFunctionId;
     double mNumericConstantValue;
     ExpressionOperatorT mOperator;
 };

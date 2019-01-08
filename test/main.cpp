@@ -74,7 +74,10 @@ void test_allok(const std::string &exprs, const double expected_result, numhop::
     value_second_time = e.evaluate(variableStorage, second_eval_ok);
     REQUIRE(second_eval_ok == true);
 
-    REQUIRE(value_first_time == value_second_time);
+    REQUIRE(value_first_time == Approx(value_second_time));
+
+    // Test expression.print
+    //WARN(e.print());
   }
 
   REQUIRE(value_first_time == Approx(expected_result));
@@ -310,11 +313,38 @@ TEST_CASE("Extract variable names") {
   test_extract_variablenames(expr, vs, expectedNamedValues, expectedValidVariableNames);
 }
 
+TEST_CASE("Math functions") {
+  numhop::VariableStorage vs;
+  vs.reserveNamedValue("pi", 3.1415);
+
+  test_allok("cos(0)", 1, vs);
+  test_allok("(cos((0)))", 1, vs);
+  test_allok("cos(0)+cos(0)", 2, vs);
+  test_allok("cos( 0 * 100)", 1, vs);
+  test_allok("cos(sin(0))", 1, vs);
+  test_allok("sin(pi/2*cos(0))", 1, vs);
+  test_allok("atan2(0,1)", 0, vs);
+  test_allok("atan2( (1+1)/2 , 2^0 )", 0.785398163397, vs);
+  test_allok("floor(6.7)", 6, vs);
+  test_allok("ceil(6.2)", 7, vs);
+  test_allok("abs(-6.7)", 6.7, vs);
+  test_allok("min(6,7)", 6, vs);
+  test_allok("max(6,7)", 7, vs);
+
+}
+
 TEST_CASE("Expressions that should fail") {
   numhop::VariableStorage vs;
   test_interpret_fail("2*-2");
   test_interpret_fail("a += 5");
   test_interpret_fail("1+1-");
   test_interpret_fail(" = 5");
+  test_interpret_fail("flooor(6.7)");
+  test_interpret_fail("floor(6,7)");
+  test_interpret_fail("atan2(1)");
+  test_eval_fail("floor6.7)", vs);  //!< @todo should fail interpret
+  test_eval_fail("floor(6.7", vs);  //!< @todo should fail interpret
+  test_eval_fail(" cos((0+1) ", vs); //!< @todo should fail interpret
   test_eval_fail("0.5huj", vs);
+
 }
