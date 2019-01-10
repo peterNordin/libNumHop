@@ -70,14 +70,7 @@ bool VariableStorage::setVariable(const std::string &name, double value, bool &r
 //! @returns True if the name is valid, else false
 bool VariableStorage::isNameInternalValid(const std::string &name) const
 {
-    for (size_t i=0; i<mDisallowedInternalNameChars.size(); ++i)
-    {
-        if (contains(name, mDisallowedInternalNameChars[i]))
-        {
-            return false;
-        }
-    }
-    return true;
+    return !containsAnyof(name, mDisallowedInternalNameChars);
 }
 
 //! @brief Set disallowed characters in internal names
@@ -161,6 +154,10 @@ void VariableStorage::setParentStorage(VariableStorage *pParentStorage)
 void VariableStorage::clearInternalVariables()
 {
     mVariableMap.clear();
+}
+
+ExternalVariableStorage::~ExternalVariableStorage() {
+
 }
 
 }

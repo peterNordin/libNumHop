@@ -13,12 +13,19 @@ bool stripLeadingTrailingParanthesis(std::string &rString, bool &rDidStrip);
 char stripInitialSign(std::string &rString);
 void stripInitialPlus(std::string &rString);
 
-inline bool contains(const std::string &str, const char c)
+template <typename ContainerT, typename KeyT>
+bool contains(const ContainerT& container, const KeyT& key)
 {
-    return (str.find_first_of(c) != std::string::npos);
+    return container.find(key) != container.end();
 }
 
-inline bool contains(const std::string &str, const std::string &match)
+template <>
+inline bool contains<std::string, char>(const std::string& container, const char& key)
+{
+    return container.find(key) != std::string::npos;
+}
+
+inline bool containsAnyof(const std::string &str, const std::string &match)
 {
     return (str.find_first_of(match) != std::string::npos);
 }

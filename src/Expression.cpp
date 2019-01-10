@@ -214,9 +214,9 @@ public:
         int id = (it != mNameIdMap.end()) ? it->second : -1;
         switch (numArgs) {
         case 1 :
-            return (mOneArgFuncs.find(id) != mOneArgFuncs.end()) ? id : -1;
+            return contains(mOneArgFuncs, id) ? id : -1;
         case 2 :
-            return (mTwoArgFuncs.find(id) != mTwoArgFuncs.end()) ? id : -1;
+            return contains(mTwoArgFuncs, id) ? id : -1;
         default:
             return -1;
         }
@@ -389,7 +389,7 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
     // Add expression
     if (foundOperator)
     {
-        if (contains(evalOperators, "+-|"))
+        if (containsAnyof(evalOperators, "+-|"))
         {
             for (size_t bp=0; bp<breakpts.size()-1; ++bp)
             {
@@ -414,7 +414,7 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
                 }
             }
         }
-        else if (contains(evalOperators, "*/&"))
+        else if (containsAnyof(evalOperators, "*/&"))
         {
             for (size_t bp=0; bp<breakpts.size()-1; ++bp)
             {
@@ -438,7 +438,7 @@ bool branchExpressionOnOperator(std::string exprString, const std::string &evalO
                 }
             }
         }
-        else if (contains(evalOperators, "=^<>"))
+        else if (containsAnyof(evalOperators, "=^<>"))
         {
             if (breakpts.size() == 3)
             {

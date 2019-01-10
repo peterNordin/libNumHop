@@ -9,7 +9,7 @@ namespace numhop {
 class ExternalVariableStorage
 {
 public:
-    virtual ~ExternalVariableStorage() {}
+    virtual ~ExternalVariableStorage();
 
     // Overload to find external variables
     virtual double externalValue(std::string name, bool &rFound) const = 0;
