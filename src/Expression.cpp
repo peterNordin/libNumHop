@@ -995,4 +995,9 @@ void Expression::copyFromOther(const Expression &other)
     mIsValid = other.mIsValid;
 }
 
+std::vector<std::string> getRegisteredFunctionNames()
+{
+    return gFunctionHandler.registeredFunctionNames();
+}
+
 }

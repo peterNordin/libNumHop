@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include <set>
+#include <vector>
 #include "VariableStorage.h"
 
 namespace numhop {
@@ -54,6 +55,7 @@ protected:
 
 bool interpretExpressionStringRecursive(std::string exprString, std::list<Expression> &rExprList);
 bool interpretExpressionStringRecursive(std::string exprString, Expression &rExpr);
+std::vector<std::string> getRegisteredFunctionNames();
 
 }
 

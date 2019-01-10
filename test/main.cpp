@@ -133,6 +133,16 @@ void test_extract_variablenames(const std::string &expr, numhop::VariableStorage
     }
 }
 
+void printRegisteredFunctionNames()
+{
+    std::string allnames;
+    std::vector<std::string> names = numhop::getRegisteredFunctionNames();
+    for(size_t i=0; i<names.size(); ++i) {
+        allnames.append(names[i]+' ');
+    }
+    WARN(allnames.c_str());
+}
+
 
 TEST_CASE("Variable Assignment") {
   numhop::VariableStorage vs;
