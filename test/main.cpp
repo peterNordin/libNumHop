@@ -282,6 +282,19 @@ TEST_CASE("Boolean Expressions") {
   test_allok("x=3.6; (x>2&x<3)*1+(x>3&x<4)*2", 2, vs);
 }
 
+TEST_CASE("Disallowed Characters") {
+    numhop::VariableStorage vs;
+    vs.setDisallowedInternalNameCharacters("cg");
+    test_allok("ape=5;", 5, vs);
+    test_eval_fail("cat=1", vs);
+    test_eval_fail("dog=1", vs);
+    test_allok("a.b=5;", 5, vs);
+    vs.setDisallowedInternalNameCharacters(".");
+    test_allok("cat=1", 1, vs);
+    test_allok("dog=1", 1, vs);
+    test_eval_fail("a.b=5;", vs);
+}
+
 TEST_CASE("Extract variable names") {
 
   numhop::VariableStorage vs;
@@ -335,6 +348,7 @@ TEST_CASE("Math functions") {
 
 TEST_CASE("Expressions that should fail") {
   numhop::VariableStorage vs;
+
   test_interpret_fail("2*-2");
   test_interpret_fail("a += 5");
   test_interpret_fail("1+1-");
@@ -342,9 +356,9 @@ TEST_CASE("Expressions that should fail") {
   test_interpret_fail("flooor(6.7)");
   test_interpret_fail("floor(6,7)");
   test_interpret_fail("atan2(1)");
+
   test_eval_fail("floor6.7)", vs);  //!< @todo should fail interpret
   test_eval_fail("floor(6.7", vs);  //!< @todo should fail interpret
   test_eval_fail(" cos((0+1) ", vs); //!< @todo should fail interpret
   test_eval_fail("0.5huj", vs);
-
 }
