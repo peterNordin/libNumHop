@@ -3,11 +3,47 @@
 #include <list>
 #include <vector>
 #include <map>
+#include <sstream>
 
 #include "numhop.h"
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
+
+template <typename ContainerT>
+std::string printContainer(const ContainerT& values) {
+    std::stringstream ss;
+    typename ContainerT::const_iterator it;
+    for (it=values.begin(); it!=values.end(); ++it) {
+        ss << " " << *it;
+    }
+    return ss.str();
+}
+
+template <typename ValueContainerT, typename ExpectedContainerT>
+void ensureContainsExpected(const ValueContainerT& values, const ExpectedContainerT& expectedValues) {
+    if (values.size() != expectedValues.size()) {
+        std::stringstream ss;
+        ss << "Container size missmatch: " << values.size() << " != " << expectedValues.size() << std::endl;
+        ss << "Actual  : " << printContainer(values) << std::endl;
+        ss << "Expected: " << printContainer(expectedValues) << std::endl;
+        FAIL(ss.str().c_str());
+
+    }
+    typename ExpectedContainerT::const_iterator it;
+    for (it=expectedValues.begin(); it!=expectedValues.end(); ++it) {
+        bool foundExpected = values.find(*it)!=values.end();
+        if (!foundExpected) {
+            std::stringstream ss;
+            ss << "Did not find expected value: ";
+            ss << *it;
+            ss << " among: " << printContainer(values);
+            FAIL(ss.str().c_str());
+        }
+    }
+}
+
+
 
 // Local variable storage wrapper class
 // local means local variables in this application,
@@ -110,27 +146,10 @@ void test_extract_variablenames(const std::string &expr, numhop::VariableStorage
     bool interpretOK = numhop::interpretExpressionStringRecursive(expr, e);
     REQUIRE(interpretOK == true);
     e.extractNamedValues(valuenames);
-    std::list<std::string>::iterator it;
-    for (it=expectednames.begin(); it!=expectednames.end(); ++it) {
-        bool foundExpected = valuenames.find(*it)!=valuenames.end();
-        if (!foundExpected) {
-            std::string msg = "Did not find expected value name: ";
-            msg += *it;
-            FAIL(msg.c_str());
-        }
-    }
-    REQUIRE(valuenames.size() == expectednames.size());
+    ensureContainsExpected(valuenames, expectednames);
 
     e.extractValidVariableNames(variableStorage, validvarnames);
-    REQUIRE(expectedvalidvars.size() == validvarnames.size());
-    for (it=expectedvalidvars.begin(); it!=expectedvalidvars.end(); ++it) {
-        bool foundExpected = validvarnames.find(*it)!=validvarnames.end();
-        if (!foundExpected) {
-            std::string msg = "Did not find expected variable: ";
-            msg += *it;
-            FAIL(msg.c_str());
-        }
-    }
+    ensureContainsExpected(validvarnames, expectedvalidvars);
 }
 
 void printRegisteredFunctionNames()
@@ -334,6 +353,43 @@ TEST_CASE("Extract variable names") {
   expectedValidVariableNames.pop_back();
   const char* expr = "ivar2 = (ivar1 + evar1 + evar2 -3*ivar1)*pi^invalid";
   test_extract_variablenames(expr, vs, expectedNamedValues, expectedValidVariableNames);
+}
+
+TEST_CASE("Rename named values") {
+
+  std::vector<std::string> expectedNamedValues;
+  expectedNamedValues.push_back("ivar1");
+  expectedNamedValues.push_back("ivar2");
+  expectedNamedValues.push_back("evar1");
+  expectedNamedValues.push_back("evar2");
+  expectedNamedValues.push_back("pi");
+  const char* expr = "ivar2 = (ivar1 + evar1 + 2 + evar2 -3*ivar1)*pi";
+
+  numhop::Expression e;
+  bool interpretOK = numhop::interpretExpressionStringRecursive(expr, e);
+  REQUIRE(interpretOK == true);
+
+  std::set<std::string> namedValues;
+  e.extractNamedValues(namedValues);
+  ensureContainsExpected(namedValues, expectedNamedValues);
+
+  namedValues.clear();
+  e.replaceNamedValue("ivar1", "replace1");
+  e.extractNamedValues(namedValues);
+  expectedNamedValues[0] = "replace1";
+  ensureContainsExpected(namedValues, expectedNamedValues);
+
+  namedValues.clear();
+  e.replaceNamedValue("ivar2", "replace2");
+  e.extractNamedValues(namedValues);
+  expectedNamedValues[1] = "replace2";
+  ensureContainsExpected(namedValues, expectedNamedValues);
+
+  namedValues.clear();
+  e.replaceNamedValue("pi", "replace3");
+  e.extractNamedValues(namedValues);
+  expectedNamedValues[4] = "replace3";
+  ensureContainsExpected(namedValues, expectedNamedValues);
 }
 
 TEST_CASE("Math functions") {

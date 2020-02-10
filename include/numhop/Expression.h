@@ -37,6 +37,7 @@ public:
     double evaluate(VariableStorage &rVariableStorage, bool &rEvalOK) const;
     void extractNamedValues(std::set<std::string> &rNamedValues) const;
     void extractValidVariableNames(const VariableStorage &variableStorage, std::set<std::string> &rVariableNames) const;
+    void replaceNamedValue(const std::string& oldName, const std::string& newName);
 
     std::string print();
 

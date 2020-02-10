@@ -850,6 +850,27 @@ void Expression::extractValidVariableNames(const VariableStorage &variableStorag
     }
 }
 
+//! @brief Replace named values (rename them)
+//! @param[in] oldName The current name of a value
+//! @param[out] newName The new name of that value
+void Expression::replaceNamedValue(const std::string &oldName, const std::string &newName)
+{
+    if ((mOperator == AssignmentT) && (mLeftExpressionString == oldName)) {
+        mLeftExpressionString = newName;
+    }
+    if (mIsNamedValue && mRightExpressionString == oldName) {
+        mRightExpressionString = newName;
+    }
+    // Recursively search for any occurance of old value and replace it
+    std::list<Expression>::iterator it;
+    for (it=mRightChildExpressions.begin(); it!=mRightChildExpressions.end(); ++it) {
+        it->replaceNamedValue(oldName, newName);
+    }
+    for (it=mLeftChildExpressions.begin(); it!=mLeftChildExpressions.end(); ++it) {
+        it->replaceNamedValue(oldName, newName);
+    }
+}
+
 //! @brief Prints the expression (as it will be evaluated) to a string
 std::string Expression::print()
 {
