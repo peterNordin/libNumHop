@@ -94,11 +94,11 @@ void test_allok(const std::string &exprs, const double expected_result, numhop::
   std::list<std::string> exprlist;
   numhop::extractExpressionRows(exprs, '#', exprlist);
 
-  INFO("Full expression: " << exprs);
+  INFO("Full expression: " << exprs)
   double value_first_time, value_second_time;
   std::list<std::string>::iterator it;
   for (it=exprlist.begin(); it!=exprlist.end(); ++it) {
-    INFO("Current sub expression: " << *it);
+    INFO("Current sub expression: " << *it)
     numhop::Expression e;
     bool interpretOK = numhop::interpretExpressionStringRecursive(*it, e);
     REQUIRE(interpretOK == true);
@@ -121,7 +121,7 @@ void test_allok(const std::string &exprs, const double expected_result, numhop::
 
 void test_interpret_fail(const std::string &expr)
 {
-  INFO("Full expression: " << expr);
+  INFO("Full expression: " << expr)
   numhop::Expression e;
   bool interpretOK = numhop::interpretExpressionStringRecursive(expr, e);
   REQUIRE(interpretOK == false);
@@ -130,7 +130,7 @@ void test_interpret_fail(const std::string &expr)
 
 void test_eval_fail(const std::string &expr, numhop::VariableStorage &variableStorage)
 {
-  INFO("Full expression: " << expr);
+  INFO("Full expression: " << expr)
   numhop::Expression e;
   bool interpretOK = numhop::interpretExpressionStringRecursive(expr, e);
   REQUIRE(interpretOK == true);
@@ -182,10 +182,10 @@ TEST_CASE("External Variables") {
 
   test_allok("dog=4; 1-(-2-3-(-dog-5.1))", -3.1, vs);
   test_allok("-dog", -4, vs);
-  REQUIRE(av["dog"] == 4);
+  REQUIRE(av["dog"] == Approx(4));
 
   test_allok("cat \n dog \r dog=5;cat=2.1;a=3;b=dog*cat*a;b", 31.5, vs);
-  REQUIRE(av["cat"] == 2.1);
+  REQUIRE(av["cat"] == Approx(2.1));
 }
 
 TEST_CASE("Reserved Variable") {
@@ -204,7 +204,7 @@ TEST_CASE("Reserved Variable") {
   // It should not be possible to change the external pi, or the reserved value
   test_eval_fail("pi=123", vs);
   test_allok("pi", 3.1415, vs);
-  REQUIRE(av["pi"] == 10000 );
+  REQUIRE(av["pi"] == Approx(10000) );
 }
 
 TEST_CASE("Expression Parsing") {
