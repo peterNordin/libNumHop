@@ -95,7 +95,7 @@ void test_allok(const std::string &exprs, const double expected_result, numhop::
   numhop::extractExpressionRows(exprs, '#', exprlist);
 
   INFO("Full expression: " << exprs)
-  double value_first_time, value_second_time;
+  double value_first_time, value_second_time, value_third_time;
   std::list<std::string>::iterator it;
   for (it=exprlist.begin(); it!=exprlist.end(); ++it) {
     INFO("Current sub expression: " << *it)
@@ -103,7 +103,7 @@ void test_allok(const std::string &exprs, const double expected_result, numhop::
     bool interpretOK = numhop::interpretExpressionStringRecursive(*it, e);
     REQUIRE(interpretOK == true);
 
-    bool first_eval_ok, second_eval_ok;;
+    bool first_eval_ok, second_eval_ok, third_eval_ok;
     value_first_time = e.evaluate(variableStorage, first_eval_ok);
     REQUIRE(first_eval_ok == true);
     // evaluate again, should give same result
@@ -112,8 +112,17 @@ void test_allok(const std::string &exprs, const double expected_result, numhop::
 
     REQUIRE(value_first_time == Approx(value_second_time));
 
-    // Test expression.print
-    //WARN(e.print());
+    // Test re-evaluating printed expression, it should be the same
+    std::string printed_expression = e.print();
+    interpretOK = numhop::interpretExpressionStringRecursive(*it, e);
+    REQUIRE(interpretOK == true);
+    value_third_time = e.evaluate(variableStorage, third_eval_ok);
+    REQUIRE(third_eval_ok == true);
+    REQUIRE(value_second_time == Approx(value_third_time));
+
+    // Print comparisson
+    //WARN(*it);
+    //WARN(printed_expression);
   }
 
   REQUIRE(value_first_time == Approx(expected_result));
