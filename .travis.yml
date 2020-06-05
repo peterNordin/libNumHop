@@ -1,5 +1,4 @@
-# Use trusty instead of obsolete precise
-dist: trusty
+dist: xenial
 sudo: required
 
 # Enable C++ support
@@ -9,13 +8,14 @@ language: cpp
 compiler:
   - gcc
   - clang
-  
+
 # Build steps
 script:
   - mkdir -p build
   - cd build
-  - cmake .. && make
-  - ctest
+  - cmake ..
+  - cmake --build . --parallel 4
+  - ctest --output-on-failure --parallel 4
 
 # Coverity scan related settings
 env:
